@@ -1,0 +1,19 @@
+# Eclipse
+# ______________________
+.project
+.metadata
+tmp/
+tmp/**/*
+*.tmp
+.classpath
+.settings/
+
+# Intellij
+# ______________________
+.idea/
+*.iml
+*.iws
+*.ipr
+*.ids
+*.orig
+classes/
