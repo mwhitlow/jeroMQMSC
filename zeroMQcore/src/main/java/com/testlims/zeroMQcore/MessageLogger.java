@@ -11,7 +11,8 @@ import org.zeromq.ZMQ.Context;
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
 public class MessageLogger extends Thread {
-	static final String topic = "log ";
+	static final String TOPIC = "Project_Log";
+	static final String TOPIC_DELIMITATED = TOPIC + " ";
 	static final String socketURL = "tcp://localhost:5555"; 
 	ZMQ.Socket logger  = null;
 	Context context = null;
@@ -26,16 +27,17 @@ public class MessageLogger extends Thread {
 		setDaemon(true);
 		context = ZMQ.context(1);
 		logger = context.socket( ZMQ.SUB);
+		logger.subscribe( TOPIC.getBytes());
 		logger.bind( socketURL);
-		logger.subscribe( topic.getBytes());
 	}
 	
 	public void run()
 	{
 		while (!Thread.currentThread().isInterrupted()) {
-			System.out.println( "waiting");
-			String message = logger.recvStr().trim(); 
-			System.out.println( "MessageLogging received message: " + message);
+			System.out.println( "MessageLogging waiting in run()");
+			String topicAndMessage = logger.recvStr(); 
+			System.out.println( "MessageLogging received topic and message: " + topicAndMessage);
+			String message = topicAndMessage.replace( TOPIC_DELIMITATED, "");
 			
 			if (message.equals( "TERMINATE_LOGGER")) {
 			//	run = false;
@@ -43,7 +45,7 @@ public class MessageLogger extends Thread {
 				break;
 			}
 			else {
-				System.out.println( message);
+				System.out.println( "MessageLogging recieved " + message);
 			}
 		}	
 		System.out.println( "MessageLogging after while loop -> Close logger socket and terminate context. ");
@@ -57,19 +59,20 @@ public class MessageLogger extends Thread {
 	 * @param args args[] is the URL of the log file, e.g. 
 	 */
 	public static void main( String[] args) throws Exception {
-		Context context2 = ZMQ.context(1);
 		
 		MessageLogger logger2 = new MessageLogger();
 		logger2.start();
-		sleep(200);
+		sleep(2000);
 		System.out.println( "MessageLogger started");
-		
-		ZMQ.Socket pub2Logger = context2.socket( ZMQ.PUB);  // .socket( ZMQ.PUB);
+
+		Context context2 = ZMQ.context(1);
+		ZMQ.Socket pub2Logger = context2.socket( ZMQ.PUB); 
 		pub2Logger.connect( "tcp://localhost:5555"); 
-		System.out.println( "main before sent");
-		pub2Logger.send( topic + "test message", 0);
+		sleep(2000);
+		System.out.println( "main after sleep and before sent");
+		pub2Logger.send( TOPIC_DELIMITATED + "test message", 0);
 		System.out.println( "main between sents");
-		pub2Logger.send( topic + "TERMINATE_LOGGER", 0);
+		pub2Logger.send( TOPIC_DELIMITATED + "TERMINATE_LOGGER", 0);
 		
 		sleep(500);
 		pub2Logger.close();
