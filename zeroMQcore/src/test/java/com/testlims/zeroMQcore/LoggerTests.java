@@ -38,7 +38,7 @@ public class LoggerTests
 	class MessageLoggerThread extends Thread {
 		public void run() {
 			try {
-				new MessageLogger( context, "/var/log/zeroMQcore/messaging.log");
+				new MessageLogger0( context, "/var/log/zeroMQcore/messaging.log");
 			}
 			catch (Exception e) {
 				System.out.print( dateFormatter.format( new Date()) + 
