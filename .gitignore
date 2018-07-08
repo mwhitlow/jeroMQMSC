@@ -1,12 +1,9 @@
 # Eclipse
 # ______________________
-.project
 .metadata
 tmp/
 tmp/**/*
 *.tmp
-.classpath
-.settings/
 
 # Intellij
 # ______________________
