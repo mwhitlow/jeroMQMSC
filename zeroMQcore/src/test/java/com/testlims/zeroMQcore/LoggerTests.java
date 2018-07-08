@@ -116,7 +116,7 @@ MessageLogging after while loop -> Close logger socket and terminate context.
 			// Start MessageLogger in a tread. 
 			MessageLogger messageLogger = new MessageLogger( SOCKET_URL, TOPIC);
 			messageLogger.start();
-			System.out.println( "loggerTest1: " + dateFormatter.format( new Date()) + " messageLogger.start()");
+			System.out.println( "loggerTest: " + dateFormatter.format( new Date()) + " messageLogger.start()");
 			
 			// Build a publisher that send out TOPIC on the socket using socketURL.
 			Context context = ZMQ.context(1);
@@ -128,7 +128,44 @@ MessageLogging after while loop -> Close logger socket and terminate context.
 			while (elapsedMilliSeconds <= 40)
 			{	
 				pub2Logger.send( topicDelimitated + "test message after " + elapsedMilliSeconds + " milliseconds", 0);
-				System.out.println( "loggerTest1: test message after " + elapsedMilliSeconds + " milliseconds");
+				System.out.println( "loggerTest: test message after " + elapsedMilliSeconds + " milliseconds");
+				Thread.sleep( sleepIncrement);
+				elapsedMilliSeconds += sleepIncrement;
+			}
+			pub2Logger.send( topicDelimitated + "TERMINATE_LOGGER", 0);
+			
+			Thread.sleep( sleepIncrement);
+			pub2Logger.close();
+			context.close();
+		}
+		catch (Exception e) {
+			fail( StackTrace.asString(e));
+		}
+	}
+	
+	@Test
+    public void loggerTest1main() {
+		final String SOCKET_URL = "tcp://localhost:5556"; 
+		final String TOPIC 		= "Project_Log";
+		final String topicDelimitated = TOPIC + " ";
+		
+		try {
+			// Start MessageLogger. 
+			String[] args = {SOCKET_URL, TOPIC};
+			MessageLogger.main( args);
+			System.out.println( "loggerTest: " + dateFormatter.format( new Date()) + " messageLogger.start()");
+			
+			// Build a publisher that send out TOPIC on the socket using socketURL.
+			Context context = ZMQ.context(1);
+			ZMQ.Socket pub2Logger = context.socket( ZMQ.PUB); 
+			pub2Logger.connect( SOCKET_URL); 
+			
+			int sleepIncrement = 5;
+			int elapsedMilliSeconds = 0;
+			while (elapsedMilliSeconds <= 40)
+			{	
+				pub2Logger.send( topicDelimitated + "test message after " + elapsedMilliSeconds + " milliseconds", 0);
+				System.out.println( "loggerTest: test message after " + elapsedMilliSeconds + " milliseconds");
 				Thread.sleep( sleepIncrement);
 				elapsedMilliSeconds += sleepIncrement;
 			}
@@ -142,4 +179,5 @@ MessageLogging after while loop -> Close logger socket and terminate context.
 			fail( StackTrace.asString(e));
 		}
 	}	
+
 }
