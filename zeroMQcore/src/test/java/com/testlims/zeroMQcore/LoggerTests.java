@@ -76,7 +76,7 @@ MessageLogging after while loop -> Close logger socket and terminate context.
 		
 		try {
 			// Start MessageLogger in a tread. 
-			MessageLogger messageLogger = new MessageLogger();
+			MessageLogger1 messageLogger = new MessageLogger1();
 			messageLogger.start();
 			System.out.println( "loggerTest0: " + dateFormatter.format( new Date()) + " messageLogger.start()");
 			
