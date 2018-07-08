@@ -4,32 +4,32 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 
 /**
- * Initial implementation of zeroMQ/jeroMQ SUB log service a where the constructor 
- * creates the message logger that listens to for the TOPIC on a TCP connection 
+ * Implementation of zeroMQ/jeroMQ SUB log service a where the constructor 
+ * creates the message logger that listens to for the topic on a TCP socket 
  * from any service sending to its socket, and logs the message to System.out. 
- * 
- * To test the system the main creates a PUB instance that send two messages. 
- <ol>
-   <li>a simple text message, and </li>
-   <li>terminate message logger message.</li>
- </ol>
  *
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
 public class MessageLogger extends Thread {
-	static final String TOPIC = "Project_Log";
-	static final String TOPIC_DELIMITATED = TOPIC + " ";
-	static final String socketURL = "tcp://localhost:5555"; 
-	ZMQ.Socket logger  = null;
-	Context context = null;
+//	private String 		socketURL 		= null; 
+//	private String 		topic 			= null;
+	private String 		topicDelimitated = null;
+	private Context 	context 		= null;
+	private ZMQ.Socket	logger  		= null;
 	
 	/**
-	 * MessageLogger Constructor  */
-	public MessageLogger() {
+	 * MessageLogger Constructor 
+	 * 
+	 * @param topic The topic that logger monitors.  
+	 * @param socketURL The URL that the logger will be bound to.   
+	 */
+	public MessageLogger(String socketURL, String topic) {
+		topicDelimitated = topic + " ";
+		
 		setDaemon(true);
 		context = ZMQ.context(1);
 		logger = context.socket( ZMQ.SUB);
-		logger.subscribe( TOPIC.getBytes());
+		logger.subscribe( topic.getBytes());
 		logger.bind( socketURL);
 	}
 	
@@ -43,7 +43,7 @@ public class MessageLogger extends Thread {
 		while (!Thread.currentThread().isInterrupted()) {
 			System.out.println( "MessageLogging waiting in run()");
 			String topicAndMessage = logger.recvStr(); 
-			String message = topicAndMessage.replace( TOPIC_DELIMITATED, "");
+			String message = topicAndMessage.replace( topicDelimitated, "");
 			
 			if (message.equals( "TERMINATE_LOGGER")) {
 			//	run = false;
@@ -63,11 +63,13 @@ public class MessageLogger extends Thread {
 	/**
 	 * Main for MessageLogger that creates a PUB instance and starts the message logger. 
 	 *
-	 * @param args No arguments are required. 
+	 * @param args The following arguments are required to start message logger:  
+	 * args[0]:  The topic that logger monitors, e.g. Project_Log 
+	 * args[1]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5555 
 	 */
 	public static void main( String[] args) throws Exception {
 		
-		MessageLogger messageLogger = new MessageLogger();
+		MessageLogger messageLogger = new MessageLogger( args[0], args[1]);
 		messageLogger.start();
 		System.out.println( "MessageLogger started");
 	}
