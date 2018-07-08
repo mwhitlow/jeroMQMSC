@@ -1,12 +1,17 @@
 package com.testlims.zeroMQcore;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.testlims.utilities.StackTrace;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TreeMap;
 
 import org.junit.*;
 
@@ -35,7 +40,7 @@ public class LoggerTests
     } */
 	
 	/**
-     * First test of MessageLogger 
+     * Test of MessageLogger0 
      * 
      * Unlike most unit tests, this test only check that no exception was thrown. 
      * The actual logging is going to System.out, and should look like: 
@@ -105,18 +110,84 @@ MessageLogging after while loop -> Close logger socket and terminate context.
 		}
     }
 	
-
+	/**
+     * Test of MessageLogger 
+     * 
+     * Unlike most unit tests, this test only check that no exception was thrown. 
+     * The actual logging is going to System.out, and should look like: 
+     * 
+	 * @throws InterruptedException if there is an issue with Thread.sleep in test. 
+     */ 
 	@Test
-    public void loggerTest1() {
-		final String SOCKET_URL = "tcp://localhost:5556"; 
-		final String TOPIC 		= "Project_Log";
+    public void loggerTest1() throws InterruptedException {
+		final String LOG_FILE_URL	= "/var/log/zeroMQcore/messaging.log";  // project.log"; 
+		final String SOCKET_URL 	= "tcp://localhost:5556"; 
+		final String TOPIC 			= "Project_Log";
+		final String topicDelimitated = TOPIC + " ";
+		
+		Date startTime	= new Date();
+		Date endTime	= null;
+		
+		// _______________________ Run Test _______________________ 
+		// Start MessageLogger in a tread. 
+		MessageLogger messageLogger = new MessageLogger( SOCKET_URL, TOPIC, LOG_FILE_URL);
+		messageLogger.start();
+			
+		// Build a publisher that send out TOPIC on the socket using socketURL.
+		Context context = ZMQ.context(1);
+		ZMQ.Socket pub2Logger = context.socket( ZMQ.PUB); 
+		pub2Logger.connect( SOCKET_URL); 
+			
+		int sleepIncrement = 5;
+		int elapsedMilliSeconds = 0;
+		while (elapsedMilliSeconds <= 40)
+		{	
+			pub2Logger.send( topicDelimitated + "test message after " + elapsedMilliSeconds + " milliseconds", 0);
+			Thread.sleep( sleepIncrement);
+			elapsedMilliSeconds += sleepIncrement;
+		}
+		
+		pub2Logger.send( topicDelimitated + "TERMINATE_LOGGER", 0);	
+		pub2Logger.close();
+		context.close();
+		endTime = new Date();
+		
+		// ____________________ Check Log File ____________________ 
+		TreeMap<Integer,String> logFileLines = readLogFile( LOG_FILE_URL);
+		
+		// Read the log file backwards. 
+		for (Integer lineNumber : logFileLines.descendingKeySet()) {
+			String line = logFileLines.get( lineNumber);
+		//	TODO:  Remove System.out	
+			System.out.println( line);
+			
+			try {  
+				Date timestamp = dateFormatter.parse( line.substring( 0, 21));
+				if (timestamp.before( startTime)) { 
+					break; 
+				}
+				else if (timestamp.before( endTime)) {
+				//	TODO:  Remove System.out	
+					System.out.println( line);
+				}
+			} 
+			catch (Exception e) {
+				fail( "Unable to parse timestamp on line " + lineNumber + " line: " + line);
+			}
+		}
+	}
+	
+	@Test
+    public void loggerTest1main() {
+		final String LOG_FILE_URL	= "/var/log/zeroMQcore/project.log";
+		final String SOCKET_URL 	= "tcp://localhost:5556"; 
+		final String TOPIC 			= "Project_Log";
 		final String topicDelimitated = TOPIC + " ";
 		
 		try {
-			// Start MessageLogger in a tread. 
-			MessageLogger messageLogger = new MessageLogger( SOCKET_URL, TOPIC);
-			messageLogger.start();
-			System.out.println( "loggerTest: " + dateFormatter.format( new Date()) + " messageLogger.start()");
+			// Start MessageLogger. 
+			String[] args = {SOCKET_URL, TOPIC, LOG_FILE_URL};
+			MessageLogger.main( args);
 			
 			// Build a publisher that send out TOPIC on the socket using socketURL.
 			Context context = ZMQ.context(1);
@@ -143,41 +214,47 @@ MessageLogging after while loop -> Close logger socket and terminate context.
 		}
 	}
 	
-	@Test
-    public void loggerTest1main() {
-		final String SOCKET_URL = "tcp://localhost:5556"; 
-		final String TOPIC 		= "Project_Log";
-		final String topicDelimitated = TOPIC + " ";
+	/** 
+	 * Read the log file.
+	 * Asserts that the file exist and can be read. 
+	 * 
+	 * @param logFileURL URL of the log file. 
+	 * 
+	 * @return map of the log file line using the line number as the key. 
+	 */
+	private TreeMap<Integer,String> readLogFile(String logFileURL) {
+		
+		File logFile = new File( logFileURL);
+		assertTrue( logFile.exists());
+		assertTrue( logFile.canRead());
+		
+		TreeMap<Integer,String>	lines	= new TreeMap<Integer,String>();
+		FileReader 		fileReader 		= null;
+		BufferedReader 	bufferedReader	= null;
 		
 		try {
-			// Start MessageLogger. 
-			String[] args = {SOCKET_URL, TOPIC};
-			MessageLogger.main( args);
-			System.out.println( "loggerTest: " + dateFormatter.format( new Date()) + " messageLogger.start()");
+			fileReader = new FileReader( logFile);
+			bufferedReader = new BufferedReader( fileReader);
 			
-			// Build a publisher that send out TOPIC on the socket using socketURL.
-			Context context = ZMQ.context(1);
-			ZMQ.Socket pub2Logger = context.socket( ZMQ.PUB); 
-			pub2Logger.connect( SOCKET_URL); 
-			
-			int sleepIncrement = 5;
-			int elapsedMilliSeconds = 0;
-			while (elapsedMilliSeconds <= 40)
-			{	
-				pub2Logger.send( topicDelimitated + "test message after " + elapsedMilliSeconds + " milliseconds", 0);
-				System.out.println( "loggerTest: test message after " + elapsedMilliSeconds + " milliseconds");
-				Thread.sleep( sleepIncrement);
-				elapsedMilliSeconds += sleepIncrement;
+			int		lineNumber = 0;
+			String 	line;
+			while ((line = bufferedReader.readLine()) != null) 
+			{	lines.put( lineNumber, line);
+				lineNumber++;
 			}
-			pub2Logger.send( topicDelimitated + "TERMINATE_LOGGER", 0);
-			
-			Thread.sleep( sleepIncrement);
-			pub2Logger.close();
-			context.close();
 		}
 		catch (Exception e) {
 			fail( StackTrace.asString(e));
 		}
-	}	
+		finally {
+			try {
+				if (bufferedReader	!= null) bufferedReader.close();
+				if (fileReader		!= null) fileReader.close();
+			}
+			catch (Exception ee) { /** Do nothing */ }	
+		}
+		
+		return lines;
+	}
 
 }

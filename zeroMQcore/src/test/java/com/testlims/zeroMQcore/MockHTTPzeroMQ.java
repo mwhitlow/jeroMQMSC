@@ -2,8 +2,8 @@ package com.testlims.zeroMQcore;
 
 import org.json.JSONObject;
 
-import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
 import org.zeromq.ZMQ.Socket;
 
 /**
@@ -23,7 +23,7 @@ import org.zeromq.ZMQ.Socket;
  */
 public class MockHTTPzeroMQ {
 
-//	private ZContext 	context 	= null; 
+	private Context 	context 	= null; 
 	private Socket 		pub2Logger	= null; 
 	
 	private static final MockHTTPzeroMQ instance = new MockHTTPzeroMQ();
@@ -44,12 +44,11 @@ public class MockHTTPzeroMQ {
 	 * 
 	 * @throws InterruptedException 
 	 */
-	public void createPublisher(ZContext context) {
-	//	this.context = context;
+	public void createPublisher() {
 		
 		// ___________ Prepare our context and sockets ___________ 
-	//	context = new ZContext(); // ZMQ.context(1);
-		pub2Logger = context.createSocket( ZMQ.PUB);  // .socket( ZMQ.PUB);
+		context = ZMQ.context(1);
+		pub2Logger = context.socket( ZMQ.PUB);  // .socket( ZMQ.PUB);
 		String socketURL = "tcp://127.0.0.1:5555";
 	//	pub2Logger.bind( socketURL);
 		pub2Logger.connect( socketURL); 
@@ -96,7 +95,7 @@ public class MockHTTPzeroMQ {
 	
 	/** Close Socket  */
 	public void closePublisher() { 
-	//	pub2Logger.close();
-	//	context.term();
+		pub2Logger.close();
+		context.term();
 	}
 }

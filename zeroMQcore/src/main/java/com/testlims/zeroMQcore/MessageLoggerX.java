@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import static java.lang.String.format;
 
 import org.json.JSONException;
 import org.json.JSONObject;

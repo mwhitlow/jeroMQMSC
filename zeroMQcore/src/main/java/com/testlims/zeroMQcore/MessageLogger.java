@@ -20,10 +20,11 @@ public class MessageLogger extends Thread {
 	/**
 	 * MessageLogger Constructor 
 	 * 
+	 * @param socketURL The URL that the logger will be bound to. 
 	 * @param topic The topic that logger monitors.  
-	 * @param socketURL The URL that the logger will be bound to.   
+	 * @param logFileURL The URL of the log file. 
 	 */
-	public MessageLogger(String socketURL, String topic) {
+	public MessageLogger(String socketURL, String topic, String logFileURL) {
 		topicDelimitated = topic + " ";
 		
 		setDaemon(true);
@@ -66,10 +67,11 @@ public class MessageLogger extends Thread {
 	 * @param args The following arguments are required to start message logger:  
 	 * args[0]:  The topic that logger monitors, e.g. Project_Log 
 	 * args[1]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5555 
+	 * args[2]:  The URL of the log file, e.g. /var/log/zeroMQcore/project.log  
 	 */
 	public static void main( String[] args) throws Exception {
 		
-		MessageLogger messageLogger = new MessageLogger( args[0], args[1]);
+		MessageLogger messageLogger = new MessageLogger( args[0], args[1], args[2]);
 		messageLogger.start();
 		System.out.println( "MessageLogger started");
 	}
