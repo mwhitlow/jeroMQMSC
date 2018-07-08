@@ -1,28 +1,30 @@
 package com.testlims.zeroMQcore;
 
+import static org.junit.Assert.fail;
+
+import com.testlims.utilities.StackTrace;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.json.JSONObject;
-
 import org.junit.*;
-import org.zeromq.ZContext;
 
-import com.testlims.utilities.StackTrace;
+import org.zeromq.ZMQ;
+import org.zeromq.ZMQ.Context;
 
 /**
- * Unit test for Message Loggers. 
+ * Unit tests for Message Loggers. 
  */
 public class LoggerTests 
 {
-	DateFormat 	dateFormatter 	= new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS");
+	DateFormat 	dateFormatter = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS");
 	
 	/**
 	 * Create the test case
 	 *
 	 * @param testName name of the test case
-	 
+	 *
 	public LoggerTests( String testName) {
 		super( testName);
 	} */
@@ -32,59 +34,75 @@ public class LoggerTests
 		return new TestSuite( LoggerTests.class);
     } */
 	
-	class MessageLoggerThread extends Thread {
-		public void run() {
-			try {
-				new MessageLogger( );
-			}
-			catch (Exception e) {
-				System.out.print( dateFormatter.format( new Date()) + 
-					StackTrace.asString( " MessageLogging Execption: ", e));
-			}
-		}
-	}
-	
 	/**
-     * Test the MessageLogger 
+     * First test of MessageLogger 
+     * 
+     * Unlike most unit tests, this test only check that no exception was thrown. 
+     * The actual logging is going to System.out, and should look like: 
+<pre>
+MessageLogging waiting in run()
+loggerTest0: 2018-07-08 09:11:03.617 messageLogger.start()
+loggerTest0: test message after 0 milliseconds
+loggerTest0: test message after 5 milliseconds
+loggerTest0: test message after 10 milliseconds
+loggerTest0: test message after 15 milliseconds
+loggerTest0: test message after 20 milliseconds
+MessageLogging received test message after 20 milliseconds
+MessageLogging waiting in run()
+loggerTest0: test message after 25 milliseconds
+MessageLogging received test message after 25 milliseconds
+MessageLogging waiting in run()
+loggerTest0: test message after 30 milliseconds
+MessageLogging received test message after 30 milliseconds
+MessageLogging waiting in run()
+loggerTest0: test message after 35 milliseconds
+MessageLogging received test message after 35 milliseconds
+MessageLogging waiting in run()
+loggerTest0: test message after 40 milliseconds
+MessageLogging received test message after 40 milliseconds
+MessageLogging waiting in run()
+MessageLogging received TERMINATE_LOGGER
+MessageLogging after while loop -> Close logger socket and terminate context. 
+</pre>
+     * Note that it takes about 20 milliseconds before the MessageLogger is ready to receive messages. 
+     * 
 	 * @throws InterruptedException when sleeping. 
 	 */
 	@Test
-    public void loggerTest() throws InterruptedException 
-    {	
-		// Start MessageLogger in a tread. 
-		MessageLoggerThread loggerThread = new MessageLoggerThread();
-		loggerThread.start();
-        System.out.println( dateFormatter.format( new Date()) + " loggerThread.start()");
-        
-        Thread.sleep( 200);
+    public void loggerTest0() {
+		final String TOPIC = "Project_Log";
+		final String TOPIC_DELIMITATED = TOPIC + " ";
+		final String socketURL = "tcp://localhost:5555"; 
 		
-		MockHTTPzeroMQ mockHTTPInsatance = MockHTTPzeroMQ.getInstance();
-	//	mockHTTPInsatance.createPublisher( );
-		System.out.println( dateFormatter.format( new Date()) + " mockHTTPInsatance.createPublisher( context)");
-		
-		Thread.sleep( 200);
-		
-		// Create a message to log. 
-		String		reguestId	= "loggerTestId";
-		String		reguestType	= "loggerTestType";
-		String		message		= "loggerTest message";
-		JSONObject	requestJSON = new JSONObject();
-        requestJSON.put( "requestType", reguestType);
-        requestJSON.put( "message", 	message);
-        mockHTTPInsatance.requestRecieved( reguestId, requestJSON);
-        System.out.println( dateFormatter.format( new Date()) + " mockHTTPInsatance.requestRecieved( reguestId, requestJSON)");
-        
-        Thread.sleep( 200);
-        
-        // Terminate logger. 
-        mockHTTPInsatance.requestRecieved( "TERMINATE_LOGGER", null);
-        System.out.println( dateFormatter.format( new Date()) + " mockHTTPInsatance.requestRecieved( \"TERMINATE_LOGGER\", null)");
-        
-        Thread.sleep( 200);
-        
-        // Terminate Publisher
-        mockHTTPInsatance.closePublisher();
-        System.out.println( dateFormatter.format( new Date()) + " mockHTTPInsatance.closePublisher()");
+		try {
+			// Start MessageLogger in a tread. 
+			MessageLogger messageLogger = new MessageLogger();
+			messageLogger.start();
+			System.out.println( "loggerTest0: " + dateFormatter.format( new Date()) + " messageLogger.start()");
+			
+			// Build a publisher that send out TOPIC on the socket using socketURL.
+			Context context = ZMQ.context(1);
+			ZMQ.Socket pub2Logger = context.socket( ZMQ.PUB); 
+			pub2Logger.connect( socketURL); 
+			
+			int sleepIncrement = 5;
+			int elapsedMilliSeconds = 0;
+			while (elapsedMilliSeconds <= 40)
+			{	
+				pub2Logger.send( TOPIC_DELIMITATED + "test message after " + elapsedMilliSeconds + " milliseconds", 0);
+				System.out.println( "loggerTest0: test message after " + elapsedMilliSeconds + " milliseconds");
+				Thread.sleep( sleepIncrement);
+				elapsedMilliSeconds += sleepIncrement;
+			}
+			pub2Logger.send( TOPIC_DELIMITATED + "TERMINATE_LOGGER", 0);
+			
+			Thread.sleep( sleepIncrement);
+			pub2Logger.close();
+			context.close();
+		}
+		catch (Exception e) {
+			fail( StackTrace.asString(e));
+		}
     }
 	
 }

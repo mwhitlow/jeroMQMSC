@@ -43,7 +43,6 @@ public class MessageLogger extends Thread {
 		while (!Thread.currentThread().isInterrupted()) {
 			System.out.println( "MessageLogging waiting in run()");
 			String topicAndMessage = logger.recvStr(); 
-			System.out.println( "MessageLogging received topic and message: " + topicAndMessage);
 			String message = topicAndMessage.replace( TOPIC_DELIMITATED, "");
 			
 			if (message.equals( "TERMINATE_LOGGER")) {
@@ -62,25 +61,7 @@ public class MessageLogger extends Thread {
 	}
 	
 	/**
-	 * Main for MessageLogger that creates a PUB instance that send two messages. 
-	<ol>
-	  <li>a simple text message, and </li>
-	  <li>terminate message logger message.</li>
-	</ol>
-	 * 
-	 * The output look as follows: 
-	 <pre>
-MessageLogging waiting in run()
-MessageLogger started
-main after sleep and before sent
-main between sends
-MessageLogging received topic and message: Project_Log test message
-MessageLogging received test message
-MessageLogging waiting in run()
-MessageLogging received topic and message: Project_Log TERMINATE_LOGGER
-MessageLogging received TERMINATE_LOGGER
-MessageLogging after while loop -> Close logger socket and terminate context. 
-	 </pre>
+	 * Main for MessageLogger that creates a PUB instance and starts the message logger. 
 	 *
 	 * @param args No arguments are required. 
 	 */
@@ -88,21 +69,7 @@ MessageLogging after while loop -> Close logger socket and terminate context.
 		
 		MessageLogger messageLogger = new MessageLogger();
 		messageLogger.start();
-		sleep(2000);
 		System.out.println( "MessageLogger started");
-
-		Context context2 = ZMQ.context(1);
-		ZMQ.Socket pub2Logger = context2.socket( ZMQ.PUB); 
-		pub2Logger.connect( "tcp://localhost:5555"); 
-		sleep(2000);
-		System.out.println( "main after sleep and before sent");
-		pub2Logger.send( TOPIC_DELIMITATED + "test message", 0);
-		System.out.println( "main between sends");
-		pub2Logger.send( TOPIC_DELIMITATED + "TERMINATE_LOGGER", 0);
-		
-		sleep(500);
-		pub2Logger.close();
-		context2.close();
 	}
 	
 }
