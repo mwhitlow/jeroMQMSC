@@ -4,9 +4,15 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 
 /**
- * MessageLogger read in message using a SUB socket from any 
- * service sending to it socket, and logs the message in to 
- * the log file using SLF4J/LOG4J. 
+ * Initial implementation of zeroMQ/jeroMQ SUB log service a where the constructor 
+ * creates the message logger that listens to for the TOPIC on a TCP connection 
+ * from any service sending to its socket, and logs the message to System.out. 
+ * 
+ * To test the system the main creates a PUB instance that send two messages. 
+ <ol>
+   <li>a simple text message, and </li>
+   <li>terminate message logger message.</li>
+ </ol>
  *
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
@@ -18,11 +24,7 @@ public class MessageLogger extends Thread {
 	Context context = null;
 	
 	/**
-	 * MessageLogger Constructor 
-	 * 
-	 * @param context zeroMQ context 
-	 * @param logFileURL URL of the log file, e.g. /var/log/zeroMQcore/messaging.log 
-	 */
+	 * MessageLogger Constructor  */
 	public MessageLogger() {
 		setDaemon(true);
 		context = ZMQ.context(1);
@@ -31,6 +33,11 @@ public class MessageLogger extends Thread {
 		logger.bind( socketURL);
 	}
 	
+	/** 
+	 * Run the message logger. 
+	 * If the message logger receives a TERMINATE_LOGGER message, 
+	 * then the logger is closed and the context terminated. 
+	 */
 	public void run()
 	{
 		while (!Thread.currentThread().isInterrupted()) {
@@ -41,11 +48,11 @@ public class MessageLogger extends Thread {
 			
 			if (message.equals( "TERMINATE_LOGGER")) {
 			//	run = false;
-				System.out.println( "MessageLogging recieved TERMINATE_LOGGER");
+				System.out.println( "MessageLogging received TERMINATE_LOGGER");
 				break;
 			}
 			else {
-				System.out.println( "MessageLogging recieved " + message);
+				System.out.println( "MessageLogging received " + message);
 			}
 		}	
 		System.out.println( "MessageLogging after while loop -> Close logger socket and terminate context. ");
@@ -55,13 +62,32 @@ public class MessageLogger extends Thread {
 	}
 	
 	/**
-	 * Main for MessageLogger
-	 * @param args args[] is the URL of the log file, e.g. 
+	 * Main for MessageLogger that creates a PUB instance that send two messages. 
+	<ol>
+	  <li>a simple text message, and </li>
+	  <li>terminate message logger message.</li>
+	</ol>
+	 * 
+	 * The output look as follows: 
+	 <pre>
+MessageLogging waiting in run()
+MessageLogger started
+main after sleep and before sent
+main between sends
+MessageLogging received topic and message: Project_Log test message
+MessageLogging received test message
+MessageLogging waiting in run()
+MessageLogging received topic and message: Project_Log TERMINATE_LOGGER
+MessageLogging received TERMINATE_LOGGER
+MessageLogging after while loop -> Close logger socket and terminate context. 
+	 </pre>
+	 *
+	 * @param args No arguments are required. 
 	 */
 	public static void main( String[] args) throws Exception {
 		
-		MessageLogger logger2 = new MessageLogger();
-		logger2.start();
+		MessageLogger messageLogger = new MessageLogger();
+		messageLogger.start();
 		sleep(2000);
 		System.out.println( "MessageLogger started");
 
@@ -71,7 +97,7 @@ public class MessageLogger extends Thread {
 		sleep(2000);
 		System.out.println( "main after sleep and before sent");
 		pub2Logger.send( TOPIC_DELIMITATED + "test message", 0);
-		System.out.println( "main between sents");
+		System.out.println( "main between sends");
 		pub2Logger.send( TOPIC_DELIMITATED + "TERMINATE_LOGGER", 0);
 		
 		sleep(500);

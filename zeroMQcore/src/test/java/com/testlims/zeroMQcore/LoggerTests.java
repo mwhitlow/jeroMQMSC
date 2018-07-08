@@ -7,18 +7,15 @@ import java.util.Date;
 import org.json.JSONObject;
 
 import org.junit.*;
-//import junit.framework.TestCase;
-//import junit.framework.TestSuite;
 import org.zeromq.ZContext;
 
 import com.testlims.utilities.StackTrace;
 
 /**
- * Unit test for Logger. 
+ * Unit test for Message Loggers. 
  */
 public class LoggerTests 
 {
-	ZContext 	context 		= null;
 	DateFormat 	dateFormatter 	= new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS");
 	
 	/**
@@ -38,18 +35,13 @@ public class LoggerTests
 	class MessageLoggerThread extends Thread {
 		public void run() {
 			try {
-				new MessageLogger0( context, "/var/log/zeroMQcore/messaging.log");
+				new MessageLogger( );
 			}
 			catch (Exception e) {
 				System.out.print( dateFormatter.format( new Date()) + 
 					StackTrace.asString( " MessageLogging Execption: ", e));
 			}
 		}
-	}
-	
-	@Before
-	public void createContext() {
-		context = new ZContext();
 	}
 	
 	/**
@@ -66,17 +58,17 @@ public class LoggerTests
         
         Thread.sleep( 200);
 		
-        MockHTTPzeroMQ mockHTTPInsatance = MockHTTPzeroMQ.getInstance();
-        mockHTTPInsatance.createPublisher( context);
-        System.out.println( dateFormatter.format( new Date()) + " mockHTTPInsatance.createPublisher( context)");
-        
-        Thread.sleep( 200);
-    	
-    	// Create a message to log. 
-        String		reguestId	= "loggerTestId";
-        String		reguestType	= "loggerTestType";
-        String		message		= "loggerTest message";
-    	JSONObject	requestJSON = new JSONObject();
+		MockHTTPzeroMQ mockHTTPInsatance = MockHTTPzeroMQ.getInstance();
+	//	mockHTTPInsatance.createPublisher( );
+		System.out.println( dateFormatter.format( new Date()) + " mockHTTPInsatance.createPublisher( context)");
+		
+		Thread.sleep( 200);
+		
+		// Create a message to log. 
+		String		reguestId	= "loggerTestId";
+		String		reguestType	= "loggerTestType";
+		String		message		= "loggerTest message";
+		JSONObject	requestJSON = new JSONObject();
         requestJSON.put( "requestType", reguestType);
         requestJSON.put( "message", 	message);
         mockHTTPInsatance.requestRecieved( reguestId, requestJSON);
@@ -95,9 +87,4 @@ public class LoggerTests
         System.out.println( dateFormatter.format( new Date()) + " mockHTTPInsatance.closePublisher()");
     }
 	
-	
-	@After
-	public void terminateContext() {
-	//	context.term();
-	}
 }
