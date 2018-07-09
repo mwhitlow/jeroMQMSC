@@ -3,8 +3,6 @@ package com.testlims.zeroMQcore;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.testlims.utilities.StackTrace;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -18,12 +16,15 @@ import org.junit.*;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 
+import com.testlims.utilities.StackTrace;
+
 /**
  * Unit tests for Message Loggers. 
  */
 public class LoggerTests 
 {
-	DateFormat 	dateFormatter = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS");
+	static final String		dateFormat		= "yyyy-MM-dd'T'HH:mm:ss.SSS";
+	static final DateFormat dateFormatter 	= new SimpleDateFormat( dateFormat);
 	
 	/**
 	 * Create the test case
@@ -120,7 +121,7 @@ MessageLogging after while loop -> Close logger socket and terminate context.
      */ 
 	@Test
     public void loggerTest1() throws InterruptedException {
-		final String LOG_FILE_URL	= "/var/log/zeroMQcore/messaging.log";  // project.log"; 
+		final String LOG_FILE_URL	= "/var/log/zeroMQcore/project.log"; 
 		final String SOCKET_URL 	= "tcp://localhost:5556"; 
 		final String TOPIC 			= "Project_Log";
 		final String topicDelimitated = TOPIC + " ";
@@ -155,26 +156,49 @@ MessageLogging after while loop -> Close logger socket and terminate context.
 		// ____________________ Check Log File ____________________ 
 		TreeMap<Integer,String> logFileLines = readLogFile( LOG_FILE_URL);
 		
+		boolean foundClosingLogger	= false; 
+		boolean foundTerminateLoger	= false;
+		int		nfoundTestMessages	= 0;
+		boolean foundLofFileOpenned	= false;
+		
 		// Read the log file backwards. 
 		for (Integer lineNumber : logFileLines.descendingKeySet()) {
 			String line = logFileLines.get( lineNumber);
-		//	TODO:  Remove System.out	
-			System.out.println( line);
 			
-			try {  
-				Date timestamp = dateFormatter.parse( line.substring( 0, 21));
+			try { 
+				String timestampString = line.substring( 0, 23);
+				Date timestamp = dateFormatter.parse( timestampString);
+				
 				if (timestamp.before( startTime)) { 
 					break; 
 				}
 				else if (timestamp.before( endTime)) {
-				//	TODO:  Remove System.out	
-					System.out.println( line);
+					if (line.contains( "MessageLogging closing logger socket and terminating context.")) {
+						foundClosingLogger = true;
+					}
+					else if (line.contains( "MessageLogging received TERMINATE_LOGGER")) {
+						foundTerminateLoger = true;
+					}
+					else if (line.contains( "test message after") && line.contains( "milliseconds")) {
+						nfoundTestMessages++;
+					}
+					else if (line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened.")) {
+						foundLofFileOpenned = true;
+					}
+					else {	
+						fail( "unexpected line: " + line);
+					}
 				}
 			} 
 			catch (Exception e) {
-				fail( "Unable to parse timestamp on line " + lineNumber + " line: " + line);
+				fail( "Unable to parse timestamp on line " + lineNumber + " line: " + line + "/n" + StackTrace.asString(e));
 			}
 		}
+		
+		assertTrue( foundClosingLogger);
+		assertTrue( foundTerminateLoger);
+		assertTrue( nfoundTestMessages > 0);
+		assertTrue( foundLofFileOpenned);
 	}
 	
 	@Test

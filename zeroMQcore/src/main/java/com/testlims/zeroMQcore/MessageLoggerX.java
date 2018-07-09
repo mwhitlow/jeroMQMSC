@@ -129,7 +129,7 @@ public class MessageLoggerX {
 	 */
 	private static void log(String messageString) 
 	{	
-		DateFormat 	dateFormatter = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss.SSS");
+		DateFormat 	dateFormatter = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS");
 		String 		loggedMessage = dateFormatter.format( new Date()) + ":";
 		
 		try {

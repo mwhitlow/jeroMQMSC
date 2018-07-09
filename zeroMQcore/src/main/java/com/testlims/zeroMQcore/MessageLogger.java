@@ -1,21 +1,33 @@
 package com.testlims.zeroMQcore;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
+
+import com.testlims.utilities.StackTrace;
 
 /**
  * Implementation of zeroMQ/jeroMQ SUB log service a where the constructor 
  * creates the message logger that listens to for the topic on a TCP socket 
- * from any service sending to its socket, and logs the message to System.out. 
+ * from any service sending to that socket, and logs the message to log file. 
  *
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
 public class MessageLogger extends Thread {
-//	private String 		socketURL 		= null; 
-//	private String 		topic 			= null;
-	private String 		topicDelimitated = null;
-	private Context 	context 		= null;
-	private ZMQ.Socket	logger  		= null;
+	private String 		topicDelimitated 	= null;
+	private Context 	context 			= null;
+	private ZMQ.Socket	logger  			= null;
+	private File 		logFile 			= null;
+	private static BufferedWriter logWriter	= null;
 	
 	/**
 	 * MessageLogger Constructor 
@@ -27,11 +39,29 @@ public class MessageLogger extends Thread {
 	public MessageLogger(String socketURL, String topic, String logFileURL) {
 		topicDelimitated = topic + " ";
 		
-		setDaemon(true);
-		context = ZMQ.context(1);
-		logger = context.socket( ZMQ.SUB);
-		logger.subscribe( topic.getBytes());
-		logger.bind( socketURL);
+		try {
+			logFile = new File( logFileURL);
+			logWriter = new BufferedWriter( new FileWriter( logFile, true));
+			log( "MessageLogging Log file " + logFileURL + " opened.");
+		} 
+		catch (IOException ioe) {
+			System.err.print( StackTrace.asString( "MessageLogging ERROR: Failed to open log file " + logFile, ioe));
+			try { 
+				if (logWriter != null) 
+				{	logWriter.close(); 
+					logWriter = null;
+				}
+			}
+			catch (IOException e1) { /** Do nothing */ }
+		}
+		
+		if (logWriter != null) {
+			setDaemon(true);
+			context = ZMQ.context(1);
+			logger = context.socket( ZMQ.SUB);
+			logger.subscribe( topic.getBytes());
+			logger.bind( socketURL);
+		}
 	}
 	
 	/** 
@@ -42,23 +72,62 @@ public class MessageLogger extends Thread {
 	public void run()
 	{
 		while (!Thread.currentThread().isInterrupted()) {
-			System.out.println( "MessageLogging waiting in run()");
 			String topicAndMessage = logger.recvStr(); 
 			String message = topicAndMessage.replace( topicDelimitated, "");
 			
 			if (message.equals( "TERMINATE_LOGGER")) {
-			//	run = false;
-				System.out.println( "MessageLogging received TERMINATE_LOGGER");
+				log( "MessageLogging received TERMINATE_LOGGER");
 				break;
 			}
 			else {
-				System.out.println( "MessageLogging received " + message);
+				log( message);
 			}
 		}	
-		System.out.println( "MessageLogging after while loop -> Close logger socket and terminate context. ");
 		
+		log( "MessageLogging closing logger socket and terminating context. ");
 		logger.close();
 		context.close();
+	}
+	
+	/**
+	 * Log the supplied messageString to the log file. 
+	 * 
+	 * @param messageString The message string contains the message to be logged. 
+	 * messageString can either be a JSON Object for the form: 
+	 * <pre>
+{    "requestId": "Id1234", 
+     "requestType": "createPersonel", 
+     "message": "createPersonel request received."
+}</pre> 
+	 * or a text message.  All log messages start with a date, e.g. 2018-06-29:08:38:03. 
+	 * If message is a JSON object string, then the requestId, requestType, and message are 
+	 * appended to the date and written to the log file.  Otherwise the messageString is 
+	 * appended to the date and written to the log file. 
+	 */
+	private static void log(String messageString) 
+	{	
+		DateFormat 	dateFormatter = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.SSS");
+		String 		loggedMessage = dateFormatter.format( new Date()) + ":";
+		
+		try {
+			JSONObject messageJSON = new JSONObject( messageString);
+			String requestId	= messageJSON.getString( "requestId");
+			String requestType	= messageJSON.getString( "requestType");
+			String message		= messageJSON.getString( "message");
+			loggedMessage = loggedMessage + requestId + ":" + requestType+ ":" + message;
+		}
+		catch (JSONException e) {
+			loggedMessage = loggedMessage + messageString;
+		}
+		
+		try {
+			logWriter.write( loggedMessage);
+			logWriter.newLine();
+			logWriter.flush();
+		} 
+		catch (IOException ioe) {
+			System.err.print( StackTrace.asString( "ERROR: Failed to log massage: " + loggedMessage, ioe));
+		}
 	}
 	
 	/**
@@ -73,7 +142,6 @@ public class MessageLogger extends Thread {
 		
 		MessageLogger messageLogger = new MessageLogger( args[0], args[1], args[2]);
 		messageLogger.start();
-		System.out.println( "MessageLogger started");
 	}
 	
 }
