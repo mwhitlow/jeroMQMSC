@@ -89,7 +89,7 @@ RequestClient received requestId 1 reply: HelloService being terminated
 	 */
 	public static void main( String[] args) throws Exception {
 		
-		HelloService1 helloService = new HelloService1();
+		HelloService0 helloService = new HelloService0();
 		helloService.start();
 		System.out.println( "HelloService started");
 		sleep(100);
