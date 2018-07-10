@@ -308,6 +308,26 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		assertTrue( foundLogFileOpenned);
 	}
 	
+	/**
+	 * This test that an exception is thrown if the MessageLogger.main is missing an argument.  */
+	@Test
+    public void loggerMainMissingArgument() {
+		final String SOCKET_URL 	= "tcp://localhost:5556"; 
+		final String TOPIC 			= "Project_Log";
+		boolean throwsException		= false;
+		
+		// Start MessageLogger missing log file URL. 
+		try {
+			String[] args = {SOCKET_URL, TOPIC};
+			MessageLogger.main( args);
+		} 
+		catch (Exception e) {
+			throwsException = true;
+		}
+		
+		assertTrue( throwsException);
+	}
+	
 	/** 
 	 * Read the log file.
 	 * Asserts that the file exist and can be read. 
