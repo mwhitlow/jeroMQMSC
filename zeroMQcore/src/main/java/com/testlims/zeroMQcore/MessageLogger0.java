@@ -35,6 +35,7 @@ public class MessageLogger0 extends Thread {
 	
 	/** 
 	 * Run the message logger. 
+	 * <p>
 	 * If the message logger receives a TERMINATE_LOGGER message, 
 	 * then the logger is closed and the context terminated. 
 	 */
@@ -79,10 +80,12 @@ MessageLogging received test message
 MessageLogging waiting in run()
 MessageLogging received topic and message: Project_Log TERMINATE_LOGGER
 MessageLogging received TERMINATE_LOGGER
-MessageLogging after while loop -> Close logger socket and terminate context. 
+MessageLogging after while loop -&gt; Close logger socket and terminate context. 
 	 </pre>
 	 *
-	 * @param args No arguments are required. 
+	 * @param args No arguments are required.
+	 * 
+	 * @throws Exception if there is an issue start, running or shutting down the MessageLogger0. 
 	 */
 	public static void main( String[] args) throws Exception {
 		

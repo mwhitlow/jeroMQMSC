@@ -4,15 +4,9 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 
 /**
- * Initial implementation of zeroMQ/jeroMQ SUB log service a where the constructor 
+ * The second implementation of zeroMQ/jeroMQ SUB log service a where the constructor 
  * creates the message logger that listens to for the TOPIC on a TCP connection 
  * from any service sending to its socket, and logs the message to System.out. 
- * 
- * To test the system the main creates a PUB instance that send two messages. 
- <ol>
-   <li>a simple text message, and </li>
-   <li>terminate message logger message.</li>
- </ol>
  *
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
@@ -35,6 +29,7 @@ public class MessageLogger1 extends Thread {
 	
 	/** 
 	 * Run the message logger. 
+	 * <p>
 	 * If the message logger receives a TERMINATE_LOGGER message, 
 	 * then the logger is closed and the context terminated. 
 	 */
@@ -64,6 +59,8 @@ public class MessageLogger1 extends Thread {
 	 * Main for MessageLogger that creates a PUB instance and starts the message logger. 
 	 *
 	 * @param args No arguments are required. 
+	 * 
+	 * @throws Exception if there is an issue start, running or shutting down the MessageLogger1. 
 	 */
 	public static void main( String[] args) throws Exception {
 		

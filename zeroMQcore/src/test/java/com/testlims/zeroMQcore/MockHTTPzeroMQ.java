@@ -38,11 +38,10 @@ public class MockHTTPzeroMQ {
 	/**
 	 * MockHTTPzeroMQ Constructor 
 	 * 
-	 * @param requestId the request Id of the mock HTTP request. 
-	 * @param requestJSON the request JSON object, containing the request type 
+	 * param requestId the request Id of the mock HTTP request. 
+	 * param requestJSON the request JSON object, containing the request type 
 	 * and other information associated with the request. 
 	 * 
-	 * @throws InterruptedException 
 	 */
 	public void createPublisher() {
 		
