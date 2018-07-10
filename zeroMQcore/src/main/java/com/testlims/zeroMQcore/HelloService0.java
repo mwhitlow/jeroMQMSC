@@ -9,7 +9,7 @@ import org.zeromq.ZMQ.Context;
  * This implementation was based on the Request-Reply example Chapter 1 of the ØMQ - The Guide, 
  * and HwClient.java and HwServer.java. 
  * <p>
- * To test the system the main creates a HelloService instance and sends it a request. 
+ * To test the system the main creates a HelloService instance and sends it the requests. 
  *
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
@@ -89,7 +89,7 @@ RequestClient received requestId 1 reply: HelloService being terminated
 	 */
 	public static void main( String[] args) throws Exception {
 		
-		HelloService0 helloService = new HelloService0();
+		HelloService1 helloService = new HelloService1();
 		helloService.start();
 		System.out.println( "HelloService started");
 		sleep(100);
