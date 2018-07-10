@@ -52,7 +52,7 @@ public class HelloService1 extends Thread {
 				service.send( response.getBytes(), 0);
 			}
 		}	
-		System.out.println( "HelloService after while loop -> Close logger socket and terminate context. ");
+		System.out.println( "HelloService after while loop -> Close service socket and terminate context. ");
 		
 		service.close();
 		context.close();

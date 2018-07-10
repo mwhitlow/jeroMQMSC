@@ -84,7 +84,7 @@ public class MessageLogger extends Thread {
 			}
 		}	
 		
-		log( "MessageLogging closing logger socket and terminating context. ");
+		log( "MessageLogging closing logger socket and terminating context.");
 		logger.close();
 		context.close();
 	}

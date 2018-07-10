@@ -1,5 +1,6 @@
 package com.testlims.zeroMQcore;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.text.DateFormat;
@@ -97,53 +98,41 @@ helloService1Test: received requestId 1 reply: HelloService being terminated
 	/**
      * Test of HelloService
      * <p>
-     * Unlike most unit tests, this test only checks that no exception was thrown. 
-     * The actual logging is going to System.out, and should look like: 
-<pre>HelloService waiting in run()
-helloServiceTest: 2018-07-10T11:22:19.442 helloService started
-helloServiceTest: sending requestId 0 requestString Tess
-HelloService received request: Tess
-HelloService response sent Hello Tess
-HelloService waiting in run()
-helloServiceTest: received requestId 0 reply: Hello Tess
-
-helloServiceTest: sending requestId 1 requestString TERMINATE_HELLO_SERVICE
-HelloService received request: TERMINATE_HELLO_SERVICE
-HelloService received TERMINATE_HELLO_SERVICE
-HelloService after while loop -> Close logger socket and terminate context. 
-helloServiceTest: received requestId 1 reply: HelloService being terminated
-</pre>
      * Note that it takes about 20 milliseconds before the HelloService is ready to receive requests. 
 	 */
 	@Test
     public void helloServiceTest() {
-		final String SOCKET_URL	= "tcp://localhost:5557"; 
+		final String LOG_FILE_URL	= "/var/log/zeroMQcore/project.log"; 
+		final String LOGGER_TOPIC	= "Project_Log"; 
+		final String LOGGER_URL		= "tcp://localhost:5556"; 
+		final String SOCKET_URL		= "tcp://localhost:5557"; 
 		
 		try {
+			MessageLogger messageLogger = new MessageLogger( LOGGER_URL, LOGGER_TOPIC, LOG_FILE_URL);
+			messageLogger.start();
+			Thread.sleep(25);
+			
 			// Start HelloService 
-			HelloService helloService = new HelloService( SOCKET_URL);
+			HelloService helloService = new HelloService( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
 			helloService.start();
-			System.out.println( "helloServiceTest: " + dateFormatter.format( new Date()) + " helloService started");
 
 			Context clientContext = ZMQ.context(1);
 			ZMQ.Socket requestClient = clientContext.socket( ZMQ.REQ); 
 			requestClient.connect( SOCKET_URL); 
 			
 			Thread.sleep(25);
-			int requestId = 0;
+		//	int requestId = 0;
 			String requestString = "Tess";
-			System.out.println( "helloServiceTest: sending requestId " + requestId + " requestString " + requestString);
 			requestClient.send( requestString.getBytes(), 0);
 			String reply = requestClient.recvStr();
-	        System.out.println( "helloServiceTest: received requestId " + requestId + " reply: " + reply + "\n");
+			assertEquals( "Hello " + requestString, reply);
 			
-			requestId++;
-			System.out.println( "helloServiceTest: sending requestId " + requestId + " requestString TERMINATE_HELLO_SERVICE");
+		//	requestId++;
 			requestClient.send( ("TERMINATE_HELLO_SERVICE").getBytes(), 0);
 			reply = requestClient.recvStr();
-	        System.out.println( "helloServiceTest: received requestId " + requestId + " reply: " + reply);
+			assertEquals( "HelloService being terminated", reply);
 			
-	        Thread.sleep(10);
+	        Thread.sleep(25);
 			requestClient.close();
 			clientContext.close();
 		}
