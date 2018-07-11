@@ -336,7 +336,7 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 	 * 
 	 * @return map of the log file line using the line number as the key. 
 	 */
-	private TreeMap<Integer,String> readLogFile(String logFileURL) {
+	static TreeMap<Integer,String> readLogFile(String logFileURL) {
 		
 		File logFile = new File( logFileURL);
 		assertTrue( logFile.exists());

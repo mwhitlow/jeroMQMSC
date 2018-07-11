@@ -1,11 +1,13 @@
 package com.testlims.zeroMQcore;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TreeMap;
 
 import org.junit.*;
 
@@ -107,6 +109,9 @@ helloService1Test: received requestId 1 reply: HelloService being terminated
 		final String LOGGER_URL		= "tcp://localhost:5556"; 
 		final String SOCKET_URL		= "tcp://localhost:5557"; 
 		
+		Date startTime	= new Date();
+		Date endTime	= null;
+		
 		try {
 			MessageLogger messageLogger = new MessageLogger( LOGGER_URL, LOGGER_TOPIC, LOG_FILE_URL);
 			messageLogger.start();
@@ -141,5 +146,70 @@ helloService1Test: received requestId 1 reply: HelloService being terminated
 		catch (Exception e) {
 			fail( StackTrace.asString(e));
 		}
+		endTime	= new Date();
+		
+		// ____________________ Check Log File ____________________ 
+		TreeMap<Integer,String> logFileLines = LoggerTests.readLogFile( LOG_FILE_URL);
+				
+		boolean foundClosingLogger		= false; 
+		boolean foundTerminateLogger	= false;
+		boolean foundresponse2			= false;
+		boolean foundreceived2			= false;
+		boolean foundresponse1			= false;
+		boolean foundreceived1			= false;
+		boolean foundLogFileOpenned		= false;
+				
+		// Read the log file backwards. 
+		for (Integer lineNumber : logFileLines.descendingKeySet()) {
+		String line = logFileLines.get( lineNumber);
+		
+			try { 
+				String timestampString = line.substring( 0, 23);
+				Date timestamp = dateFormatter.parse( timestampString);
+				
+				if (timestamp.before( startTime)) { 
+					break; 
+				}
+				else if (timestamp.before( endTime)) {
+					
+					if (line.contains( "MessageLogging closing logger socket and terminating context.")) {
+						foundClosingLogger = true;
+					}
+					else if (line.contains( "MessageLogging received TERMINATE_LOGGER")) {
+						foundTerminateLogger = true;
+					}
+					else if (line.contains( "HelloService closing service and logger sockets and terminate context.")) {
+						foundresponse2 = true;
+					}
+					else if (line.contains( "HelloService received request: TERMINATE_HELLO_SERVICE")) {
+						foundreceived2 = true;
+					}
+					else if (line.contains( "HelloService response sent Hello Tess")) {
+						foundresponse1 = true;
+					}
+					else if (line.contains( "HelloService received request: Tess")) {
+						foundreceived1 = true;
+					}
+					else if (line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened.")) {
+						foundLogFileOpenned = true;
+					}
+					else {	
+						fail( "unexpected line: " + line);
+					}
+				}
+			}
+		
+			catch (Exception e) {
+			fail( "Unable to parse timestamp on line " + lineNumber + " line: " + line + "/n" + StackTrace.asString(e));
+			}
+		}
+		
+		assertTrue( foundClosingLogger);
+		assertTrue( foundTerminateLogger);
+		assertTrue( foundresponse2);
+		assertTrue( foundreceived2);
+		assertTrue( foundresponse1);
+		assertTrue( foundreceived1);
+		assertTrue( foundLogFileOpenned);
     }
 }
