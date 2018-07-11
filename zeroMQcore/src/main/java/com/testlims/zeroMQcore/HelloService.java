@@ -1,5 +1,7 @@
 package com.testlims.zeroMQcore;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 
@@ -44,18 +46,45 @@ public class HelloService extends Thread {
 	{
 		while (!Thread.currentThread().isInterrupted()) {
 			String request = service.recvStr(); 
-			String logMessage = "HelloService received request: " + request;
-			pub2Logger.send( loggerTopicDelimitated + logMessage, 0);
-            
+			
             // Create a responses
 			if (request.contains( "TERMINATE_HELLO_SERVICE")) {
+				pub2Logger.send( loggerTopicDelimitated + "HelloService request: TERMINATE_HELLO_SERVICE", 0);
 				service.send( "HelloService being terminated".getBytes(), 0);
 				break;
 			}
 			else {
-				String response = "Hello " + request;
-				pub2Logger.send( (loggerTopicDelimitated + "HelloService response sent " + response), 0);
-				service.send( response.getBytes(), 0);
+				String logRequestMessage  = "HelloService:";
+				String logResponseMessage = "HelloService:";
+				JSONObject responseJSON = new JSONObject();
+				
+				try {
+					JSONObject requestJSON = new JSONObject( request);
+					String requestId	= requestJSON.getString( "requestId");
+					String requestType	= requestJSON.getString( "requestType");
+					logRequestMessage	+= requestId + ":" + requestType + ".request:";
+					logResponseMessage	+= requestId + ":" + requestType + ".response:";
+					
+					if (requestType.equals( "sayHello") && requestJSON.has( "name")) { 
+						String name = requestJSON.getString( "name");
+						logRequestMessage = logRequestMessage + name;
+						
+						String responseText = "Hello " + name;
+						responseJSON.put( "requestId",		requestId);
+						responseJSON.put( "requestType",	requestType);
+						responseJSON.put( "response", 		responseText);
+						
+						logResponseMessage += responseText;
+					}
+				}
+				catch (JSONException e) {
+					logRequestMessage	= logRequestMessage + " JSON Issue in " + request;
+					logResponseMessage	= logResponseMessage + " JSON Issue, see request above.";
+				}
+				
+				pub2Logger.send( loggerTopicDelimitated + logRequestMessage, 0);
+				service.send( responseJSON.toString().getBytes(), 0);
+				pub2Logger.send( loggerTopicDelimitated + logResponseMessage, 0);
 			}
 		}
 		

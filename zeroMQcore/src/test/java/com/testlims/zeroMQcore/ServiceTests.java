@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TreeMap;
 
+import org.json.JSONObject;
 import org.junit.*;
 
 import org.zeromq.ZMQ;
@@ -44,19 +45,16 @@ public class ServiceTests
      * Unlike most unit tests, this test only checks that no exception was thrown. 
      * The actual logging is going to System.out, and should look like: 
 <pre>
-helloService1Test: 2018-07-10T10:48:15.454 helloService started
+helloService1Test: 2018-07-10T19:50:17.367 helloService started
 HelloService waiting in run()
 helloService1Test: sending requestId 0 requestString Tess
 HelloService received request: Tess
 HelloService response sent Hello Tess
 HelloService waiting in run()
-helloService1Test: received requestId 0 reply: Hello Tess
-
 helloService1Test: sending requestId 1 requestString TERMINATE_HELLO_SERVICE
 HelloService received request: TERMINATE_HELLO_SERVICE
 HelloService received TERMINATE_HELLO_SERVICE
-HelloService after while loop -> Close logger socket and terminate context. 
-helloService1Test: received requestId 1 reply: HelloService being terminated
+HelloService after while loop -&gt; Close service socket and terminate context. 
 </pre>
      * Note that it takes about 20 milliseconds before the HelloService is ready to receive requests. 
 	 */
@@ -80,13 +78,13 @@ helloService1Test: received requestId 1 reply: HelloService being terminated
 			System.out.println( "helloService1Test: sending requestId " + requestId + " requestString " + requestString);
 			requestClient.send( requestString.getBytes(), 0);
 			String reply = requestClient.recvStr();
-	        System.out.println( "helloService1Test: received requestId " + requestId + " reply: " + reply + "\n");
+			assertEquals( "Hello " + requestString, reply);
 			
 			requestId++;
 			System.out.println( "helloService1Test: sending requestId " + requestId + " requestString TERMINATE_HELLO_SERVICE");
 			requestClient.send( ("TERMINATE_HELLO_SERVICE").getBytes(), 0);
 			reply = requestClient.recvStr();
-	        System.out.println( "helloService1Test: received requestId " + requestId + " reply: " + reply);
+			assertEquals( "HelloService being terminated", reply);
 			
 	        Thread.sleep(10);
 			requestClient.close();
@@ -126,13 +124,20 @@ helloService1Test: received requestId 1 reply: HelloService being terminated
 			requestClient.connect( SOCKET_URL); 
 			
 			Thread.sleep(25);
-		//	int requestId = 0;
-			String requestString = "Tess";
-			requestClient.send( requestString.getBytes(), 0);
+			String requestId 	= "helloServiceTest";
+			String requestType	= "sayHello";
+			String name 		= "Tess";
+			JSONObject requestJSON = new JSONObject();
+			requestJSON.put( "requestId",	requestId);
+			requestJSON.put( "requestType", requestType);
+			requestJSON.put( "name", 		name);
+			requestClient.send( requestJSON.toString().getBytes(), 0);
 			String reply = requestClient.recvStr();
-			assertEquals( "Hello " + requestString, reply);
+			JSONObject responseJSON = new JSONObject( reply);
+			assertEquals( requestId,		responseJSON.getString( "requestId"));
+			assertEquals( requestType,		responseJSON.getString( "requestType"));
+			assertEquals( "Hello " + name,	responseJSON.getString( "response"));
 			
-		//	requestId++;
 			requestClient.send( ("TERMINATE_HELLO_SERVICE").getBytes(), 0);
 			reply = requestClient.recvStr();
 			assertEquals( "HelloService being terminated", reply);
@@ -181,13 +186,13 @@ helloService1Test: received requestId 1 reply: HelloService being terminated
 					else if (line.contains( "HelloService closing service and logger sockets and terminate context.")) {
 						foundresponse2 = true;
 					}
-					else if (line.contains( "HelloService received request: TERMINATE_HELLO_SERVICE")) {
+					else if (line.contains( "HelloService request: TERMINATE_HELLO_SERVICE")) {
 						foundreceived2 = true;
 					}
-					else if (line.contains( "HelloService response sent Hello Tess")) {
+					else if (line.contains( "HelloService:helloServiceTest:sayHello.request:Tess")) {
 						foundresponse1 = true;
 					}
-					else if (line.contains( "HelloService received request: Tess")) {
+					else if (line.contains( "HelloService:helloServiceTest:sayHello.response:Hello Tess")) {
 						foundreceived1 = true;
 					}
 					else if (line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened.")) {
