@@ -146,4 +146,24 @@ public class MessageLogger extends Thread {
 		messageLogger.start();
 	}
 	
+	/**
+	 * Terminate the message logger that is running on the supplied loggerURL and 
+	 * listen to the supplied topic. 
+	 * 
+	 * @param loggerURL URL of the running message logger. 
+	 * @param topic The topic that logger monitors. 
+	 * 
+	 * @throws InterruptedException if there is an issue sleep while waiting for the "publisher to logger" to startup. 
+	 */
+	public static void terminate(String loggerURL, String topic) throws InterruptedException {
+		Context context = ZMQ.context(1);
+		ZMQ.Socket pub2Logger = context.socket( ZMQ.PUB); 
+		pub2Logger.connect( loggerURL); 
+		
+		Thread.sleep( 25);
+		pub2Logger.send( topic + " " + "TERMINATE_LOGGER", 0);
+		pub2Logger.close();
+		context.close();
+	}
+	
 }

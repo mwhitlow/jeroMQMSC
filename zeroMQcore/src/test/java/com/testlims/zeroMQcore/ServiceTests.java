@@ -135,6 +135,8 @@ helloService1Test: received requestId 1 reply: HelloService being terminated
 	        Thread.sleep(25);
 			requestClient.close();
 			clientContext.close();
+			
+			MessageLogger.terminate( LOGGER_URL, LOGGER_TOPIC);
 		}
 		catch (Exception e) {
 			fail( StackTrace.asString(e));
