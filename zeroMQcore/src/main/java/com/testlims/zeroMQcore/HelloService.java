@@ -7,8 +7,41 @@ import org.zeromq.ZMQ.Context;
 
 /**
  * Implementation of a hello service using zeroMQ/jeroMQ REP (Response), where the constructor 
- * creates the HelloService with both a response (REP) and logger publisher (PUB) sockets. 
- *
+ * creates the HelloService with a response (REP) and a publisher to the logger (PUB) sockets. 
+ * <p>
+ * The hello service has two modes of handling requests. 
+ <ol>
+   <li>JSON Object:  The request JSON object supplies both the request ID, and the request type.  
+   The two request types that are current supported are: 
+     <ol>
+       <li>sendHTML
+         <pre>{
+  "requestId":    "anId", 
+  "requestType":  "sendHTML"
+} </pre>
+	   </li>
+	  
+       <li>sayHello
+         <pre>{
+  "requestId":    "anId", 
+  "requestType":  "sayHello",
+  "name":         "a Name"
+} </pre>
+	   </li> 
+     </ol>
+   Both JSON request return a JSON Response that, like the JSON request, contains the request ID and the request type,   
+   plus the specific response for the request type.  Show below is the response JSON for sayHello request type, 
+   where the supplied name was Tess.  
+   <pre>{
+  "requestId":    "anId", 
+  "requestType":  "sayHello", 
+  "response":     "Hello Tess"
+} </pre> 
+   </li>
+   <li>Text:  The only text string that is currently supported is TERMINATE_HELLO_SERVICE, 
+   which closing Hello service and logger sockets and terminate context.</li>
+ </ol>
+ * 
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
 public class HelloService extends Thread {
@@ -18,7 +51,7 @@ public class HelloService extends Thread {
 	private String		loggerTopicDelimitated	= null;
 	
 	/**
-	 * MessageLogger Constructor 
+	 * HelloService Constructor 
 	 * 
 	 * @param socketURL The URL that the service will be bound to. 
 	 * @param loggerURL The URL of the logger.
@@ -40,7 +73,7 @@ public class HelloService extends Thread {
 	 * Run the Hello Service. 
 	 * <p>
 	 * If the service receives a TERMINATE_HELLO_SERVICE request, 
-	 * then the service and published to logger are closed and the context terminated. 
+	 * then the service and publisher to logger are closed and the context terminated. 
 	 */
 	public void run()
 	{
@@ -62,29 +95,42 @@ public class HelloService extends Thread {
 					JSONObject requestJSON = new JSONObject( request);
 					String requestId	= requestJSON.getString( "requestId");
 					String requestType	= requestJSON.getString( "requestType");
-					logRequestMessage	+= requestId + ":" + requestType + ".request:";
-					logResponseMessage	+= requestId + ":" + requestType + ".response:";
+					logRequestMessage	+= requestId + ":" + requestType + ".request";
+					logResponseMessage	+= requestId + ":" + requestType + ".response";
 					
 					if (requestType.equals( "sayHello") && requestJSON.has( "name")) { 
 						String name = requestJSON.getString( "name");
-						logRequestMessage = logRequestMessage + name;
+						pub2Logger.send( loggerTopicDelimitated + logRequestMessage + ":" + name, 0);
 						
 						String responseText = "Hello " + name;
 						responseJSON.put( "requestId",		requestId);
 						responseJSON.put( "requestType",	requestType);
 						responseJSON.put( "response", 		responseText);
+						service.send( responseJSON.toString().getBytes(), 0);
+
+						pub2Logger.send( loggerTopicDelimitated + logResponseMessage + ":" + responseText, 0);
+					}
+					else if (requestType.equals( "sendHTML")) {
+						pub2Logger.send( loggerTopicDelimitated + logRequestMessage, 0);
 						
-						logResponseMessage += responseText;
+						StringBuilder html = new StringBuilder();
+						html.append( "<form class=\"helloForm\">\n");
+						html.append( "  Name: <input type=\"text\" name=\"name\" />\n");
+						html.append( "  <br />\n");
+						html.append( "  <input type=\"submit\" value=\"Submit\" />\n");
+						html.append( "</form>");
+						responseJSON.put( "requestId",		requestId);
+						responseJSON.put( "requestType",	requestType);
+						responseJSON.put( "html", 			html.toString());
+						service.send( responseJSON.toString().getBytes(), 0);
+
+						pub2Logger.send( loggerTopicDelimitated + logResponseMessage, 0);
 					}
 				}
 				catch (JSONException e) {
 					logRequestMessage	= logRequestMessage + " JSON Issue in " + request;
 					logResponseMessage	= logResponseMessage + " JSON Issue, see request above.";
 				}
-				
-				pub2Logger.send( loggerTopicDelimitated + logRequestMessage, 0);
-				service.send( responseJSON.toString().getBytes(), 0);
-				pub2Logger.send( loggerTopicDelimitated + logResponseMessage, 0);
 			}
 		}
 		
@@ -97,9 +143,9 @@ public class HelloService extends Thread {
 	/**
 	 * Main for HelloService1 that creates a REP instance and starts the Hello service. 
 	 * 
-	 * @param args The following arguments are required to start message logger:  
-	 * args[0]:  The URL that the service will be bound to, e.g. tcp://127.0.0.1:5557 
-	 * args[1]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5556 
+	 * @param args The following arguments are required to start message logger:  <br>
+	 * args[0]:  The URL that the service will be bound to, e.g. tcp://127.0.0.1:5557 <br>
+	 * args[1]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5556  <br>
 	 * args[2]:  The topic used by the logger, e.g. Project_Log. 
 	 * 
 	 * @throws Exception if there is an issue start, running or shutting down the HelloService1. 

@@ -122,21 +122,40 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 			Context clientContext = ZMQ.context(1);
 			ZMQ.Socket requestClient = clientContext.socket( ZMQ.REQ); 
 			requestClient.connect( SOCKET_URL); 
-			
+
 			Thread.sleep(25);
-			String requestId 	= "helloServiceTest";
-			String requestType	= "sayHello";
-			String name 		= "Tess";
+			String requestId 	= "helloServiceTest.1";
+			String requestType	= "sendHTML";
 			JSONObject requestJSON = new JSONObject();
 			requestJSON.put( "requestId",	requestId);
 			requestJSON.put( "requestType", requestType);
-			requestJSON.put( "name", 		name);
 			requestClient.send( requestJSON.toString().getBytes(), 0);
 			String reply = requestClient.recvStr();
 			JSONObject responseJSON = new JSONObject( reply);
 			assertEquals( requestId,		responseJSON.getString( "requestId"));
 			assertEquals( requestType,		responseJSON.getString( "requestType"));
-			assertEquals( "Hello " + name,	responseJSON.getString( "response"));
+			StringBuilder html = new StringBuilder();
+			html.append( "<form class=\"helloForm\">\n");
+			html.append( "  Name: <input type=\"text\" name=\"name\" />\n");
+			html.append( "  <br />\n");
+			html.append( "  <input type=\"submit\" value=\"Submit\" />\n");
+			html.append( "</form>");
+			assertEquals( html.toString(),	responseJSON.getString( "html"));
+			
+			Thread.sleep(25);
+			String requestId2 	= "helloServiceTest.2";
+			String requestType2	= "sayHello";
+			String name 		= "Tess";
+			JSONObject request2JSON = new JSONObject();
+			request2JSON.put( "requestId",	requestId2);
+			request2JSON.put( "requestType", requestType2);
+			request2JSON.put( "name", 		name);
+			requestClient.send( request2JSON.toString().getBytes(), 0);
+			String reply2 = requestClient.recvStr();
+			JSONObject response2JSON = new JSONObject( reply2);
+			assertEquals( requestId2,		response2JSON.getString( "requestId"));
+			assertEquals( requestType2,		response2JSON.getString( "requestType"));
+			assertEquals( "Hello " + name,	response2JSON.getString( "response"));
 			
 			requestClient.send( ("TERMINATE_HELLO_SERVICE").getBytes(), 0);
 			reply = requestClient.recvStr();
@@ -162,6 +181,8 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		boolean foundreceived2			= false;
 		boolean foundresponse1			= false;
 		boolean foundreceived1			= false;
+		boolean foundresponse0			= false;
+		boolean foundreceived0			= false;
 		boolean foundLogFileOpenned		= false;
 				
 		// Read the log file backwards. 
@@ -189,11 +210,17 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 					else if (line.contains( "HelloService request: TERMINATE_HELLO_SERVICE")) {
 						foundreceived2 = true;
 					}
-					else if (line.contains( "HelloService:helloServiceTest:sayHello.request:Tess")) {
+					else if (line.contains( "HelloService:helloServiceTest.2:sayHello.request:Tess")) {
 						foundresponse1 = true;
 					}
-					else if (line.contains( "HelloService:helloServiceTest:sayHello.response:Hello Tess")) {
+					else if (line.contains( "HelloService:helloServiceTest.2:sayHello.response:Hello Tess")) {
 						foundreceived1 = true;
+					}
+					else if (line.contains( "HelloService:helloServiceTest.1:sendHTML.request")) {
+						foundresponse0 = true;
+					}
+					else if (line.contains( "HelloService:helloServiceTest.1:sendHTML.response")) {
+						foundreceived0 = true;
 					}
 					else if (line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened.")) {
 						foundLogFileOpenned = true;
@@ -215,6 +242,8 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		assertTrue( foundreceived2);
 		assertTrue( foundresponse1);
 		assertTrue( foundreceived1);
+		assertTrue( foundresponse0);
+		assertTrue( foundreceived0);
 		assertTrue( foundLogFileOpenned);
     }
 }
