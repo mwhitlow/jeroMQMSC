@@ -274,25 +274,33 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		// Start HelloService 
 		HelloService helloService = new HelloService( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
 		helloService.start();
-		Thread.sleep(50);
+		Thread.sleep(25);
 		
 		// Start MockHTTPzeroMQ
 		MockHTTPzeroMQ mockHTTPzeroMQ = new MockHTTPzeroMQ( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
-		Thread.sleep(50);
+		Thread.sleep(25);
 		
 		// Send a HTTP request and response to the MockHTTPzeroMQ 
 		String requestType	= "sendHTML";
 		JSONObject requestJSON = new JSONObject();
 		requestJSON.put( "requestType", requestType);
-		
 		MockHttpServletRequest mockRequest = new MockHttpServletRequest( requestJSON.toString());
 		MockHttpServletResponse mockResponse = new MockHttpServletResponse();
 		mockHTTPzeroMQ.doPost( mockRequest, mockResponse);
-		Thread.sleep(100);
+		
+		// Send a second HTTP request and response to the MockHTTPzeroMQ 
+		String requestType1	= "sayHello";
+		String name 		= "Tess";
+		JSONObject request1JSON = new JSONObject();
+		request1JSON.put( "requestType", requestType1);
+		request1JSON.put( "name", 		name);
+		MockHttpServletRequest mockRequest1 = new MockHttpServletRequest( request1JSON.toString());
+		MockHttpServletResponse mockResponse1 = new MockHttpServletResponse();
+		mockHTTPzeroMQ.doPost( mockRequest1, mockResponse1);
+		Thread.sleep(25);
 		
 		// Send a HTTP request and response to terminate Hello Service
-		String request	= "TERMINATE_HELLO_SERVICE";
-		
+		String request = "TERMINATE_HELLO_SERVICE";
 		MockHttpServletRequest mockRequest2 = new MockHttpServletRequest( request);
 		MockHttpServletResponse mockResponse2 = new MockHttpServletResponse();
 		mockHTTPzeroMQ.doPost( mockRequest2, mockResponse2);
@@ -310,6 +318,10 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		mockResponse.assertEqualsStatus( 200);
 		mockResponse.assertEqualsResponse( "{\"requestType\":\"sendHTML\",\"requestId\":\"1\"," +
 				"\"html\":\"<form class=\\\"helloForm\\\">\\n  Name: <input type=\\\"text\\\" name=\\\"name\\\" />\\n  <br />\\n  <input type=\\\"submit\\\" value=\\\"Submit\\\" />\\n<\\/form>\"}");
+
+		mockResponse1.assertEqualsContentType( "application/json; charset=utf-8");
+		mockResponse1.assertEqualsStatus( 200);
+		mockResponse1.assertEqualsResponse( "{\"requestType\":\"sayHello\",\"requestId\":\"2\",\"response\":\"Hello Tess\"}");
 		
 		mockResponse2.assertEqualsContentType( "application/text; charset=utf-8");
 		mockResponse2.assertEqualsStatus( 200);
@@ -326,6 +338,7 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		boolean foundMock2				= false;
 		boolean foundresponse1			= false;
 		boolean foundreceived1			= false;
+		boolean foundMock1				= false;
 		boolean foundresponse0			= false;
 		boolean foundreceived0			= false;
 		boolean foundMockRequest0		= false;
@@ -359,7 +372,7 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 					else if (line.contains( "HelloService request: TERMINATE_HELLO_SERVICE")) {
 						foundreceived2 = true;
 					}
-					else if (line.contains( "MockHTTPzeroMQ doPost:2:received TERMINATE_HELLO_SERVICE")) {
+					else if (line.contains( "MockHTTPzeroMQ doPost:3:received TERMINATE_HELLO_SERVICE")) {
 						foundMock2 = true;
 					}
 					else if (line.contains( "HelloService:2:sayHello.request:Tess")) {
@@ -367,6 +380,9 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 					}
 					else if (line.contains( "HelloService:2:sayHello.response:Hello Tess")) {
 						foundreceived1 = true;
+					}
+					else if (line.contains( "MockHTTPzeroMQ doPost:2:sayHello.request")) {
+						foundMock1 = true;
 					}
 					else if (line.contains( "HelloService:1:sendHTML.request")) {
 						foundresponse0 = true;
@@ -386,7 +402,7 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 				}
 			}
 			catch (Exception e) {
-				fail( "");
+				fail( "Unable to parse timestamp on line " + lineNumber + " line: " + line + "/n" + StackTrace.asString(e));
 			}
 		}	
 		
@@ -396,9 +412,9 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		assertTrue( foundresponse2);
 		assertTrue( foundreceived2);
 		assertTrue( foundMock2);
-	//	assertTrue( foundresponse1);
-	//	assertTrue( foundreceived1);
-	//	assertTrue( foundMockRequest1);
+		assertTrue( foundresponse1);
+		assertTrue( foundreceived1);
+		assertTrue( foundMock1);
 		assertTrue( foundresponse0);
 		assertTrue( foundreceived0);
 		assertTrue( foundMockRequest0);
