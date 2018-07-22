@@ -1,10 +1,13 @@
 package com.testlims.zeroMQcore;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import org.json.JSONObject;
 
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
-import org.zeromq.ZMQ.Socket;
 
 /**
  * MockHTTPzeroMQ is a mock of HTTP POST request being sent out as a zeroMQ message.  
@@ -21,80 +24,100 @@ import org.zeromq.ZMQ.Socket;
  *
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
-public class MockHTTPzeroMQ {
+public class MockHTTPzeroMQ extends Thread {
 
-	private Context 	context 	= null; 
-	private Socket 		pub2Logger	= null; 
-	
-	private static final MockHTTPzeroMQ instance = new MockHTTPzeroMQ();
-	
-	// Private constructor to avoid client applications to use constructor
-    private MockHTTPzeroMQ(){}
-
-    public static MockHTTPzeroMQ getInstance() {
-        return instance;
-    }
+	private Context 	context					= null; 
+	private ZMQ.Socket 	zeroMQService			= null; 
+	private ZMQ.Socket 	pub2Logger				= null; 
+	private	String		loggerTopicDelimitated	= null;
+	private int 		requestId 				= 0; 
 	
 	/**
 	 * MockHTTPzeroMQ Constructor 
 	 * 
-	 * param requestId the request Id of the mock HTTP request. 
-	 * param requestJSON the request JSON object, containing the request type 
-	 * and other information associated with the request. 
-	 * 
+	 * @param socketURL The URL that the zeroMQ socket will be bound to. 
+	 * @param loggerURL The URL of the logger.
+	 * @param loggerTopic the logger topic, e.g. Project_Log. 
 	 */
-	public void createPublisher() {
+	public MockHTTPzeroMQ(String socketURL, String loggerURL, String loggerTopic) {
+		setDaemon(true);
+		context = ZMQ.context(1); 
 		
-		// ___________ Prepare our context and sockets ___________ 
-		context = ZMQ.context(1);
-		pub2Logger = context.socket( ZMQ.PUB);  // .socket( ZMQ.PUB);
-		String socketURL = "tcp://127.0.0.1:5555";
-	//	pub2Logger.bind( socketURL);
-		pub2Logger.connect( socketURL); 
-	/*	try {
-			Thread.sleep( 1);
-		} catch (InterruptedException e) {
-			System.out.println( StackTrace.asString( "MockHTTPzeroMQ:Socket Sleep Exception", e));
-		}
-	 */
-		pub2Logger.send( ( "MockHTTPzeroMQ:Socket pub2Logger connected to socket " + socketURL).getBytes());
-		System.out.println( "MockHTTPzeroMQ:Socket pub2Logger connected to socket " + socketURL);
+		pub2Logger = context.socket( ZMQ.PUB);
+		pub2Logger.connect( loggerURL); 
+		loggerTopicDelimitated = loggerTopic + " ";
+		pub2Logger.send( ( "MockHTTPzeroMQ:Socket pub2Logger connected to socket " + loggerURL).getBytes());
+			
+		zeroMQService = context.socket( ZMQ.REQ);
+		zeroMQService.connect( socketURL);
+		pub2Logger.send( ( "MockHTTPzeroMQ:Socket zeroMQService connected to socket " + socketURL).getBytes());
 	}
-
+	
 	/**
-	 * Process request. 
+	 * Process POST request. 
 	 * 
 	 * @param requestId the request Id of the mock HTTP request. 
 	 * @param requestJSON the request JSON object, containing the request type 
 	 * and other information associated with the request. 
+	 * 
+	 * @throws IOException if there is an issue reading the request. 
 	 */
-	public void requestRecieved( String requestId, JSONObject requestJSON) {
+	protected void doPost(MockHttpServletRequest request, MockHttpServletResponse response) throws IOException {
+		Integer httpStatusCode = 200;
+
+		requestId++;
+		// ___________________ Readout Request ___________________ 
+		String line = null;
+		StringBuffer jsonBuffer = new StringBuffer();
+		BufferedReader reader = request.getReader();
+		while ((line = reader.readLine()) != null) {
+			jsonBuffer.append( line);
+		} 
 		
-		// ___________________ Log the Request ___________________ 
-		String receivedMessage = null;
-		if (requestJSON == null) {
-			receivedMessage = requestId;
+		try {	
+			JSONObject requestJSON = new JSONObject( jsonBuffer.toString());
+			
+			// ___________________ Log the Request ___________________ 
+			String reqestType = requestJSON.getString( "requestType");
+			pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + reqestType + ".request").getBytes());		
+			
+			//                 Send Request to HelloServices
+			// _______________ Send Request to Broker ________________ 
+			requestJSON.put( "requestId", String.valueOf( requestId));
+			zeroMQService.send( requestJSON.toString().getBytes(), 0);
 		}
-		else {
-			receivedMessage = "RID:" + requestId + " requestType: " + requestJSON.get( "requestType") + " received.";
+		catch(Exception e) {
+			//             Failed to process as JSON Object
+			// ______________ Log the Request as String ______________ 
+			String requestString = jsonBuffer.toString();
+			pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":received " + requestString).getBytes());		
+			
+			// _______________ Send Request to Broker ________________ 
+			zeroMQService.send( requestString.getBytes(), 0);
 		}
-		pub2Logger.send( receivedMessage.getBytes());
-		System.out.println( "MockHTTPzeroMQ:Message sent to pub2Logger: " + receivedMessage);
-		
-		// _______________ Send Request to Broker ________________ 
-		//	TODO: Create Broker & Send Request to Broker
-		//	Socket req2Broker = context.socket( ZMQ.PUB);
 		
 		// __________________ Log the Response ___________________ 
-		//	TODO: Log response to logger.
-		//	String responseMessage = "RID:" + requestId + " Request type " + requestJSON.get( "rquestType") + " response: ";
-		//	pub2Logger.send( responseMessage, 0);
-		
+		String reply = zeroMQService.recvStr();
+		response.setStatus( httpStatusCode);
+		PrintWriter writer = response.getWriter();
+		try {
+			JSONObject responseJSON = new JSONObject( reply);
+			response.setContentType( "application/json; charset=utf-8");
+			writer.println( responseJSON.toString());
+		}
+		catch(Exception e) {
+			//             Failed to process as JSON Object
+			// ______________ Log the Request as String ______________ 
+			response.setContentType( "application/text; charset=utf-8");
+			writer.println( reply);
+		}
 	}
 	
-	/** Close Socket  */
-	public void closePublisher() { 
+	/** Close sockets and context  */
+	public void closeAndTerminate() { 
+		pub2Logger.send( loggerTopicDelimitated + "MockHTTPzeroMQ request: close and terminate", 0);
 		pub2Logger.close();
+		zeroMQService.close();
 		context.term();
 	}
 }

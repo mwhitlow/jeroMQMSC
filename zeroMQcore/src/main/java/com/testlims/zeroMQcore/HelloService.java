@@ -20,7 +20,6 @@ import org.zeromq.ZMQ.Context;
   "requestType":  "sendHTML"
 } </pre>
 	   </li>
-	  
        <li>sayHello
          <pre>{
   "requestId":    "anId", 
