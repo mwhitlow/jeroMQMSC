@@ -66,6 +66,7 @@ public class MockHTTPzeroMQ extends Thread {
 		Integer httpStatusCode = 200;
 
 		requestId++;
+		String requestType = null;
 		// ___________________ Readout Request ___________________ 
 		String line = null;
 		StringBuffer jsonBuffer = new StringBuffer();
@@ -78,8 +79,8 @@ public class MockHTTPzeroMQ extends Thread {
 			JSONObject requestJSON = new JSONObject( jsonBuffer.toString());
 			
 			// ___________________ Log the Request ___________________ 
-			String reqestType = requestJSON.getString( "requestType");
-			pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + reqestType + ".request").getBytes());		
+			requestType = requestJSON.getString( "requestType");
+			pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + requestType + ".request").getBytes());		
 			
 			//                 Send Request to HelloServices
 			// _______________ Send Request to Broker ________________ 
@@ -89,11 +90,11 @@ public class MockHTTPzeroMQ extends Thread {
 		catch(Exception e) {
 			//             Failed to process as JSON Object
 			// ______________ Log the Request as String ______________ 
-			String requestString = jsonBuffer.toString();
-			pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":received " + requestString).getBytes());		
+			requestType = jsonBuffer.toString();
+			pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + requestType + ".request").getBytes());		
 			
 			// _______________ Send Request to Broker ________________ 
-			zeroMQService.send( requestString.getBytes(), 0);
+			zeroMQService.send( requestType.getBytes(), 0);
 		}
 		
 		// __________________ Log the Response ___________________ 
@@ -111,6 +112,7 @@ public class MockHTTPzeroMQ extends Thread {
 			response.setContentType( "application/text; charset=utf-8");
 			writer.println( reply);
 		}
+		pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + requestType + ".response").getBytes());
 	}
 	
 	/** Close sockets and context  */

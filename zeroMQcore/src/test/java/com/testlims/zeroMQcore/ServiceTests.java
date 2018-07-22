@@ -297,7 +297,7 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		MockHttpServletRequest mockRequest1 = new MockHttpServletRequest( request1JSON.toString());
 		MockHttpServletResponse mockResponse1 = new MockHttpServletResponse();
 		mockHTTPzeroMQ.doPost( mockRequest1, mockResponse1);
-		Thread.sleep(25);
+		Thread.sleep(2);
 		
 		// Send a HTTP request and response to terminate Hello Service
 		String request = "TERMINATE_HELLO_SERVICE";
@@ -333,12 +333,15 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		boolean foundClosingLogger		= false; 
 		boolean foundTerminateLogger	= false;
 		boolean foundClosingMock		= false;
+		boolean foundMockResp2			= false;
 		boolean foundresponse2			= false;
 		boolean foundreceived2			= false;
 		boolean foundMock2				= false;
+		boolean foundMockResp1			= false;
 		boolean foundresponse1			= false;
 		boolean foundreceived1			= false;
 		boolean foundMock1				= false;
+		boolean foundMockResp0			= false;
 		boolean foundresponse0			= false;
 		boolean foundreceived0			= false;
 		boolean foundMockRequest0		= false;
@@ -366,14 +369,20 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 					else if (line.contains( "MockHTTPzeroMQ request: close and terminate")) {
 						foundClosingMock = true;
 					}
+					else if (line.contains( "MockHTTPzeroMQ doPost:3:TERMINATE_HELLO_SERVICE.response")) {
+						foundMockResp2 = true;
+					}
 					else if (line.contains( "HelloService closing service and logger sockets and terminate context.")) {
 						foundresponse2 = true;
 					}
 					else if (line.contains( "HelloService request: TERMINATE_HELLO_SERVICE")) {
 						foundreceived2 = true;
 					}
-					else if (line.contains( "MockHTTPzeroMQ doPost:3:received TERMINATE_HELLO_SERVICE")) {
+					else if (line.contains( "MockHTTPzeroMQ doPost:3:TERMINATE_HELLO_SERVICE.request")) {
 						foundMock2 = true;
+					}
+					else if (line.contains( "MockHTTPzeroMQ doPost:2:sayHello.response")) {
+						foundMockResp1 = true;
 					}
 					else if (line.contains( "HelloService:2:sayHello.request:Tess")) {
 						foundresponse1 = true;
@@ -383,6 +392,9 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 					}
 					else if (line.contains( "MockHTTPzeroMQ doPost:2:sayHello.request")) {
 						foundMock1 = true;
+					}
+					else if (line.contains( "MockHTTPzeroMQ doPost:1:sendHTML.response")) {
+						foundMockResp0 = true;
 					}
 					else if (line.contains( "HelloService:1:sendHTML.request")) {
 						foundresponse0 = true;
@@ -409,12 +421,15 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		assertTrue( foundClosingLogger);
 		assertTrue( foundTerminateLogger);
 		assertTrue( foundClosingMock);
+		assertTrue( foundMockResp2);
 		assertTrue( foundresponse2);
 		assertTrue( foundreceived2);
 		assertTrue( foundMock2);
+		assertTrue( foundMockResp1);
 		assertTrue( foundresponse1);
 		assertTrue( foundreceived1);
 		assertTrue( foundMock1);
+		assertTrue( foundMockResp0);
 		assertTrue( foundresponse0);
 		assertTrue( foundreceived0);
 		assertTrue( foundMockRequest0);
