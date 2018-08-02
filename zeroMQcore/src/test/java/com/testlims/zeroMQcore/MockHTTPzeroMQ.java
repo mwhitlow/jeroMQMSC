@@ -82,8 +82,8 @@ public class MockHTTPzeroMQ extends Thread {
 			requestType = requestJSON.getString( "requestType");
 			pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + requestType + ".request").getBytes());		
 			
-			//                 Send Request to HelloServices
-			// _______________ Send Request to Broker ________________ 
+			//                 
+			// ___________ Send Request to HelloServices _____________ 
 			requestJSON.put( "requestId", String.valueOf( requestId));
 			zeroMQService.send( requestJSON.toString().getBytes(), 0);
 		}
