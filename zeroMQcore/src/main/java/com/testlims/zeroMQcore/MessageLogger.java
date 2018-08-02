@@ -87,6 +87,14 @@ public class MessageLogger extends Thread {
 		log( "MessageLogging closing logger socket and terminating context.");
 		logger.close();
 		context.close();
+		if (logWriter != null) {
+			try {
+				logWriter.flush();
+				logWriter.close();
+			} catch (IOException e) {
+				System.err.print( StackTrace.asString( "ERROR: Failed to flush and close logWriter: ", e));
+			}
+		}
 	}
 	
 	/**
@@ -111,9 +119,9 @@ public class MessageLogger extends Thread {
 		
 		try {
 			JSONObject messageJSON = new JSONObject( messageString);
-			String requestId	= messageJSON.has( "requestId")	  ? messageJSON.getString( "requestId") : "0";
-			String requestType	= messageJSON.has( "requestType") ? messageJSON.getString( "requestType") : "REQUEST_TYPE_MISSING";
-			String message		= messageJSON.has( "message")	  ? messageJSON.getString( "message") : "NO_MESSAGE";
+			String requestId	= messageJSON.has( "requestId")		? messageJSON.getString( "requestId")	: "0";
+			String requestType	= messageJSON.has( "requestType")	? messageJSON.getString( "requestType")	: "REQUEST_TYPE_MISSING";
+			String message		= messageJSON.has( "message")		? messageJSON.getString( "message")		: "MESSAGE_MISSING";
 			loggedMessage = loggedMessage + requestId + ":" + requestType+ ":" + message;
 		}
 		catch (JSONException e) {
@@ -145,26 +153,5 @@ public class MessageLogger extends Thread {
 		MessageLogger messageLogger = new MessageLogger( args[0], args[1], args[2]);
 		messageLogger.start();
 	}
-	
-	/**
-	 * Terminate the message logger that is running on the supplied loggerURL and 
-	 * listen to the supplied topic. 
-	 * 
-	 * @param loggerURL URL of the running message logger. 
-	 * @param topic The topic that logger monitors. 
-	 * 
-	 * @throws InterruptedException if there is an issue sleep while waiting for the "publisher to logger" to startup. 
-	 *
-	public static void terminate(String loggerURL, String topic) throws InterruptedException {
-		Context context = ZMQ.context(1);
-		ZMQ.Socket pub2Logger = context.socket( ZMQ.PUB); 
-		pub2Logger.connect( loggerURL); 
-		
-		Thread.sleep( 25);
-		pub2Logger.send( topic + " " + "TERMINATE_LOGGER", 0);
-		pub2Logger.close();
-		context.close();
-	}
-	*/
 	
 }

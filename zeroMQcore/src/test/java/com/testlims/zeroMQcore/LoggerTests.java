@@ -1,7 +1,6 @@
 package com.testlims.zeroMQcore;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import com.testlims.utilities.StackTrace;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,19 +12,21 @@ import java.util.TreeMap;
 
 import org.json.JSONObject;
 import org.junit.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
-
-import com.testlims.utilities.StackTrace;
 
 /**
  * Unit tests for Message Loggers. 
  */
 public class LoggerTests 
 {
-	static final String		dateFormat		= "yyyy-MM-dd'T'HH:mm:ss.SSS";
-	static final DateFormat dateFormatter 	= new SimpleDateFormat( dateFormat);
+	static final String		dateFormat			= "yyyy-MM-dd'T'HH:mm:ss.SSS";
+	static final String		fileDateFormat		= "yyyy-MM-dd'T'HH.mm.ss.SSS";
+	static final DateFormat dateFormatter 		= new SimpleDateFormat( dateFormat);
+	static final DateFormat fileDateFormatter 	= new SimpleDateFormat( fileDateFormat);
 	
 	/**
 	 * Create the test case
@@ -40,6 +41,22 @@ public class LoggerTests
 	public static junit.framework.Test suite() {
 		return new TestSuite( LoggerTests.class);
     } */
+	
+	@BeforeClass
+	public static void removeOldLogFiles() {	
+		File logDirectory = new File( "C:/var/log/zeroMQcore");
+		File[] logFileList = logDirectory.listFiles();
+		
+		for (int f=0; f<logFileList.length; f++)
+		{	File logFile = logFileList[f];
+			
+			if (!logFile.delete()) {
+				System.out.println( "LoggerTests.removeOldLogFiles: " + dateFormatter.format( new Date()) + 
+					" FAILED TO DELETE " + logFile.getName());
+			}
+		}
+	}
+	
 	
 	/**
      * Test of MessageLogger1
@@ -256,7 +273,7 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 			
 		Thread.sleep( 5);
 		pub2Logger.send( topicDelimitated + "TERMINATE_LOGGER", 0);
-			
+		
 		pub2Logger.close();
 		context.close();
 		endTime = new Date();
@@ -370,5 +387,22 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		
 		return lines;
 	}
-
+	
+	
+	@After
+	public void moveLogFile() {	
+		File logFile = new File( "C:/var/log/zeroMQcore/project.log");
+		
+		if (logFile.exists())
+		{	String timestamp = fileDateFormatter.format( new Date( logFile.lastModified()));
+			File renamedLogFile = new File( "C:/var/log/zeroMQcore/project_" + timestamp + ".log");
+			
+			if (!logFile.renameTo( renamedLogFile)) {
+				System.out.println( "LoggerTests.moveExistingLogFile: " + dateFormatter.format( new Date()) + 
+						" FAILED TO MOVE project.log to " + renamedLogFile.getName());
+			}
+		}
+		
+		logFile = null;
+	}
 }
