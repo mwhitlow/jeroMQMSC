@@ -111,9 +111,9 @@ public class MessageLogger extends Thread {
 		
 		try {
 			JSONObject messageJSON = new JSONObject( messageString);
-			String requestId	= messageJSON.getString( "requestId");
-			String requestType	= messageJSON.getString( "requestType");
-			String message		= messageJSON.getString( "message");
+			String requestId	= messageJSON.has( "requestId")	  ? messageJSON.getString( "requestId") : "0";
+			String requestType	= messageJSON.has( "requestType") ? messageJSON.getString( "requestType") : "REQUEST_TYPE_MISSING";
+			String message		= messageJSON.has( "message")	  ? messageJSON.getString( "message") : "NO_MESSAGE";
 			loggedMessage = loggedMessage + requestId + ":" + requestType+ ":" + message;
 		}
 		catch (JSONException e) {
@@ -154,7 +154,7 @@ public class MessageLogger extends Thread {
 	 * @param topic The topic that logger monitors. 
 	 * 
 	 * @throws InterruptedException if there is an issue sleep while waiting for the "publisher to logger" to startup. 
-	 */
+	 *
 	public static void terminate(String loggerURL, String topic) throws InterruptedException {
 		Context context = ZMQ.context(1);
 		ZMQ.Socket pub2Logger = context.socket( ZMQ.PUB); 
@@ -165,5 +165,6 @@ public class MessageLogger extends Thread {
 		pub2Logger.close();
 		context.close();
 	}
+	*/
 	
 }
