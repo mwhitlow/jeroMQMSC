@@ -12,6 +12,7 @@ import java.util.TreeMap;
 
 import org.json.JSONObject;
 import org.junit.*;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -176,49 +177,45 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		// ____________________ Check Log File ____________________ 
 		TreeMap<Integer,String> logFileLines = readLogFile( LOG_FILE_URL);
 		
-		boolean foundClosingLogger	= false; 
-		boolean foundTerminateLoger	= false;
-		int		nfoundTestMessages	= 0;
-		boolean foundLogFileOpenned	= false;
-		
 		// Read the log file backwards. 
-		for (Integer lineNumber : logFileLines.descendingKeySet()) {
+		for (Integer lineNumber : logFileLines.keySet()) {
 			String line = logFileLines.get( lineNumber);
-			
-			try { 
+
+			try {
 				String timestampString = line.substring( 0, 23);
-				Date timestamp = dateFormatter.parse( timestampString);
-				
-				if (timestamp.before( startTime)) { 
-					break; 
-				}
-				else if (timestamp.before( endTime)) {
-					if (line.contains( "MessageLogging closing logger socket and terminating context.")) {
-						foundClosingLogger = true;
-					}
-					else if (line.contains( "MessageLogging received TERMINATE_LOGGER")) {
-						foundTerminateLoger = true;
-					}
-					else if (line.contains( "test message after") && line.contains( "milliseconds")) {
-						nfoundTestMessages++;
-					}
-					else if (line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened.")) {
-						foundLogFileOpenned = true;
-					}
-					else {	
-						fail( "unexpected line: " + line);
-					}
-				}
-			} 
+				Date timestamp = dateFormatter.parse( timestampString);		
+				assertTrue( timestamp.equals( startTime) || timestamp.after( startTime));
+				assertTrue( timestamp.before( endTime));
+			}
 			catch (Exception e) {
-				fail( "Unable to parse timestamp on line " + lineNumber + " line: " + line + "/n" + StackTrace.asString(e));
+				fail( "Unable to parse timestamp on line " + lineNumber + " line: " + line);
+			}
+			
+			if (lineNumber == 0) { 
+				assertTrue( line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened."));
+			}
+			else if (lineNumber == 1) { 
+				assertTrue( line.contains( "test message after 5 milliseconds"));
+			}
+			else if (lineNumber == 2) { 
+				assertTrue( line.contains( "test message after 10 milliseconds"));
+			}
+			else if (lineNumber == 4) { 
+				assertTrue( line.contains( "test message after 20 milliseconds"));
+			}
+			else if (lineNumber == 8) { 
+				assertTrue( line.contains( "test message after 40 milliseconds"));
+			}
+			else if (lineNumber == 9) { 
+				assertTrue( line.contains( "MessageLogging received TERMINATE_LOGGER"));
+			}
+			else if (lineNumber == 10) { 
+				assertTrue( line.contains( "MessageLogging closing logger socket and terminating context."));
+			}
+			else if (lineNumber > 10) {
+				fail( "Unexpected line number " + lineNumber + " line: " + line);
 			}
 		}
-		
-		assertTrue( foundClosingLogger);
-		assertTrue( foundTerminateLoger);
-		assertTrue( nfoundTestMessages > 0);
-		assertTrue( foundLogFileOpenned);
 	}
 	
 	/**
@@ -281,48 +278,36 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		// ____________________ Check Log File ____________________ 
 		TreeMap<Integer,String> logFileLines = readLogFile( LOG_FILE_URL);
 		
-		boolean foundClosingLogger	= false; 
-		boolean foundTerminateLoger	= false;
-		boolean foundLogFileOpenned	= false;
-		
 		// Read the log file backwards. 
-		for (Integer lineNumber : logFileLines.descendingKeySet()) {
+		for (Integer lineNumber : logFileLines.keySet()) {
 			String line = logFileLines.get( lineNumber);
-			
-			try { 
+
+			try {
 				String timestampString = line.substring( 0, 23);
-				Date timestamp = dateFormatter.parse( timestampString);
-				
-				if (timestamp.before( startTime)) { 
-					break; 
-				}
-				else if (timestamp.before( endTime)) {
-					if (line.contains( "MessageLogging closing logger socket and terminating context.")) {
-						foundClosingLogger = true;
-					}
-					else if (line.contains( "MessageLogging received TERMINATE_LOGGER")) {
-						foundTerminateLoger = true;
-					}
-					else if (line.contains( requestId)) {
-						assertTrue( line.contains( requestType));
-						assertTrue( line.contains( message));
-					}
-					else if (line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened.")) {
-						foundLogFileOpenned = true;
-					}
-					else {	
-						fail( "unexpected line: " + line);
-					}
-				}
+				Date timestamp = dateFormatter.parse( timestampString);		
+				assertTrue( timestamp.equals( startTime) || timestamp.after( startTime));
+				assertTrue( timestamp.before( endTime));
 			}
 			catch (Exception e) {
-				fail( "Unable to parse timestamp on line " + lineNumber + " line: " + line + "/n" + StackTrace.asString(e));
+				fail( "Unable to parse timestamp on line " + lineNumber + " line: " + line);
+			}
+			
+			if (lineNumber == 0) { 
+				assertTrue( line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened."));
+			}
+			else if (lineNumber == 1) { 
+				assertTrue( line.contains( "loggerTest1mainId:LoggerTests:loggerTest1main message"));
+			}
+			else if (lineNumber == 2) { 
+				assertTrue( line.contains( "MessageLogging received TERMINATE_LOGGER"));
+			}
+			else if (lineNumber == 3) { 
+				assertTrue( line.contains( "MessageLogging closing logger socket and terminating context."));
+			}
+			else {
+				fail( "Unexpected line number " + lineNumber + " line: " + line);
 			}
 		}
-		
-		assertTrue( foundClosingLogger);
-		assertTrue( foundTerminateLoger);
-		assertTrue( foundLogFileOpenned);
 	}
 	
 	/**
