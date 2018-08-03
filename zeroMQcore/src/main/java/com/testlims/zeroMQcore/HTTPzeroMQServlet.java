@@ -41,8 +41,8 @@ public class HTTPzeroMQServlet extends HttpServlet {
 	/**
 	 * HTTPzeroMQServlet Constructor 
 	 * 
-	 * @param socketURL The URL that the zeroMQ request (REQ) socket will be bound to. 
-	 * @param loggerURL The URL of the logger.
+	 * @param socketURL The URL of the hello service that this servlet will be connected to. 
+	 * @param loggerURL The URL of the message logger that this servlet will be connected to.
 	 * @param loggerTopic the logger topic, e.g. Project_Log. 
 	 */
 	public HTTPzeroMQServlet(String socketURL, String loggerURL, String loggerTopic) {

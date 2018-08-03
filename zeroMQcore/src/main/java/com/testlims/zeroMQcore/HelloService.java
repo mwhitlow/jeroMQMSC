@@ -144,7 +144,7 @@ public class HelloService extends Thread {
 	 * 
 	 * @param args The following arguments are required to start message logger:  <br>
 	 * args[0]:  The URL that the service will be bound to, e.g. tcp://127.0.0.1:5557 <br>
-	 * args[1]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5556  <br>
+	 * args[1]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5555  <br>
 	 * args[2]:  The topic used by the logger, e.g. Project_Log. 
 	 * 
 	 * @throws Exception if there is an issue start, running or shutting down the HelloService1. 

@@ -142,8 +142,8 @@ public class MessageLogger extends Thread {
 	 * Main for MessageLogger that creates a PUB instance and starts the message logger. 
 	 *
 	 * @param args The following arguments are required to start message logger:  
-	 * args[0]:  The topic that logger monitors, e.g. Project_Log 
-	 * args[1]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5555 
+	 * args[0]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5555 
+	 * args[1]:  The topic that logger monitors, e.g. Project_Log 
 	 * args[2]:  The URL of the log file, e.g. /var/log/zeroMQcore/project.log  
 	 * 
 	 * @throws Exception if there is an issue start, running or shutting down the MessageLogger. 
