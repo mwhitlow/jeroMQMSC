@@ -5,6 +5,7 @@ tmp/
 tmp/**/*
 *.tmp
 target/
+/build/
 
 # Intellij
 # ______________________
@@ -14,4 +15,4 @@ target/
 *.ipr
 *.ids
 *.orig
-classes/
+/classes/
