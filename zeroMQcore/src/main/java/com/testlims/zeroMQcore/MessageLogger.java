@@ -85,8 +85,6 @@ public class MessageLogger extends Thread {
 		}	
 		
 		log( "MessageLogging closing logger socket and terminating context.");
-		logger.close();
-		context.close();
 		if (logWriter != null) {
 			try {
 				logWriter.flush();
@@ -95,6 +93,8 @@ public class MessageLogger extends Thread {
 				System.err.print( StackTrace.asString( "ERROR: Failed to flush and close logWriter: ", e));
 			}
 		}
+		logger.close();
+		context.close();
 	}
 	
 	/**

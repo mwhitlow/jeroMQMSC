@@ -98,9 +98,9 @@ public class MockHTTPzeroMQ extends Thread {
 		}
 		
 		// __________________ Log the Response ___________________ 
-		String reply = zeroMQService.recvStr();
 		response.setStatus( httpStatusCode);
 		PrintWriter writer = response.getWriter();
+		String reply = zeroMQService.recvStr();
 		try {
 			JSONObject responseJSON = new JSONObject( reply);
 			response.setContentType( "application/json; charset=utf-8");
