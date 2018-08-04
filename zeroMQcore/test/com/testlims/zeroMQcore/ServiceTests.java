@@ -188,7 +188,7 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 	 */
 	@Test
     public void helloServiceShouldReturnHelloName() throws InterruptedException, IOException {
-		final String SOCKET_URL		= "tcp://localhost:5557"; 
+		final String SOCKET_URL	= "tcp://localhost:5557"; 
 		
 		// Start HelloService 
 		HelloService helloService = new HelloService( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
