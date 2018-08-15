@@ -1,4 +1,4 @@
-package com.testlims.zeroMQcore;
+package com.testlims.messageLogger;
 
 import com.testlims.utilities.StackTrace;
 
@@ -153,7 +153,8 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		// _______________________ Run Test _______________________ 
 		// Start MessageLogger in a tread. 
 		MessageLogger messageLogger = new MessageLogger( SOCKET_URL, TOPIC, LOG_FILE_URL);
-		messageLogger.start();
+		Thread t = new Thread( messageLogger);
+		t.start();
 			
 		// Build a publisher that send out TOPIC on the socket using socketURL.
 		Context context = ZMQ.context(1);
@@ -178,6 +179,7 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		TreeMap<Integer,String> logFileLines = readLogFile( LOG_FILE_URL);
 		
 		// Read the log file backwards. 
+		int firstTimeLine = 0;
 		for (Integer lineNumber : logFileLines.keySet()) {
 			String line = logFileLines.get( lineNumber);
 
@@ -195,24 +197,24 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 				assertTrue( line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened."));
 			}
 			else if (lineNumber == 1) { 
-				assertTrue( line.contains( "test message after 5 milliseconds"));
+				if( line.contains( "test message after 10 milliseconds")) firstTimeLine = 1;
+				if( line.contains( "test message after 15 milliseconds")) firstTimeLine = 2;
+				if( line.contains( "test message after 20 milliseconds")) firstTimeLine = 3;
+				if( line.contains( "test message after 25 milliseconds")) firstTimeLine = 4;
 			}
-			else if (lineNumber == 2) { 
-				assertTrue( line.contains( "test message after 10 milliseconds"));
+			else if ((lineNumber + firstTimeLine) == 6) { 
+				assertTrue( line.contains( "test message after 30 milliseconds"));
 			}
-			else if (lineNumber == 4) { 
-				assertTrue( line.contains( "test message after 20 milliseconds"));
-			}
-			else if (lineNumber == 8) { 
+			else if ((lineNumber + firstTimeLine) == 8) { 
 				assertTrue( line.contains( "test message after 40 milliseconds"));
 			}
-			else if (lineNumber == 9) { 
+			else if ((lineNumber + firstTimeLine) == 9) { 
 				assertTrue( line.contains( "MessageLogging received TERMINATE_LOGGER"));
 			}
-			else if (lineNumber == 10) { 
+			else if ((lineNumber + firstTimeLine) == 10) { 
 				assertTrue( line.contains( "MessageLogging closing logger socket and terminating context."));
 			}
-			else if (lineNumber > 10) {
+			else if ((lineNumber + firstTimeLine) > 10) {
 				fail( "Unexpected line number " + lineNumber + " line: " + line);
 			}
 		}
@@ -252,9 +254,10 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		Date startTime	= new Date();
 		Date endTime	= null;
 		
-		// Start MessageLogger. 
-		String[] args = {SOCKET_URL, TOPIC, LOG_FILE_URL};
-		MessageLogger.main( args);
+		// Start MessageLogger in a tread. 
+		MessageLogger messageLogger = new MessageLogger( SOCKET_URL, TOPIC, LOG_FILE_URL);
+		Thread t = new Thread( messageLogger);
+		t.start();
 		
 		// Build a publisher that send out TOPIC on the socket using socketURL.
 		Context context = ZMQ.context(1);

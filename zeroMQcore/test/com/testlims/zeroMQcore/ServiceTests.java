@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -68,8 +70,8 @@ public class ServiceTests
 		startTime = new Date();
 		
 		// Start MessageLogger 
-		MessageLogger messageLogger = new MessageLogger( LOGGER_URL, LOGGER_TOPIC, LOG_FILE_URL);
-		messageLogger.start();
+	//	MessageLogger messageLogger = new MessageLogger( LOGGER_URL, LOGGER_TOPIC, LOG_FILE_URL);
+	//	messageLogger.start();
 		Thread.sleep(25);
 	}
 	
@@ -282,7 +284,8 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		Thread.sleep(10);
 		endTime = new Date();
 		
-		TreeMap<Integer,String> logFileLines = LoggerTests.readLogFile( LOG_FILE_URL);
+	//	TODO:  Create readLogFile( LOG_FILE_URL);
+		TreeMap<Integer,String> logFileLines = readLogFile( LOG_FILE_URL);
 		
 		// Read the log file backwards. 
 		for (Integer lineNumber : logFileLines.keySet()) {
@@ -352,6 +355,49 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		}
 	}
 
+	/** 
+	 * Read the log file.
+	 * Asserts that the file exist and can be read. 
+	 * 
+	 * @param logFileURL URL of the log file. 
+	 * 
+	 * @return map of the log file line using the line number as the key. 
+	 */
+	private TreeMap<Integer, String> readLogFile(String logFileURL) {
+
+		File logFile = new File( logFileURL);
+		assertTrue( logFile.exists());
+		assertTrue( logFile.canRead());
+		
+		TreeMap<Integer,String>	lines	= new TreeMap<Integer,String>();
+		FileReader 		fileReader 		= null;
+		BufferedReader 	bufferedReader	= null;
+		
+		try {
+			fileReader = new FileReader( logFile);
+			bufferedReader = new BufferedReader( fileReader);
+			
+			int		lineNumber = 0;
+			String 	line;
+			while ((line = bufferedReader.readLine()) != null) 
+			{	lines.put( lineNumber, line);
+				lineNumber++;
+			}
+		}
+		catch (Exception e) {
+			fail( StackTrace.asString(e));
+		}
+		finally {
+			try {
+				if (bufferedReader	!= null) bufferedReader.close();
+				if (fileReader		!= null) fileReader.close();
+			}
+			catch (Exception ee) { /** Do nothing */ }	
+		}
+		
+		return lines;
+	}
+	
 	
 	@After
 	public void moveLogFile() throws InterruptedException {	

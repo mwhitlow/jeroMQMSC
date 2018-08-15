@@ -1,4 +1,4 @@
-package com.testlims.zeroMQcore;
+package com.testlims.messageLogger;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -22,7 +22,7 @@ import com.testlims.utilities.StackTrace;
  *
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
-public class MessageLogger extends Thread {
+public class MessageLogger implements Runnable {
 	private String 		topicDelimitated 	= null;
 	private Context 	context 			= null;
 	private ZMQ.Socket	logger  			= null;
@@ -56,7 +56,7 @@ public class MessageLogger extends Thread {
 		}
 		
 		if (logWriter != null) {
-			setDaemon(true);
+		//	setDaemon(true);
 			context = ZMQ.context(1);
 			logger = context.socket( ZMQ.SUB);
 			logger.subscribe( topic.getBytes());
@@ -145,13 +145,11 @@ public class MessageLogger extends Thread {
 	 * args[0]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5555 
 	 * args[1]:  The topic that logger monitors, e.g. Project_Log 
 	 * args[2]:  The URL of the log file, e.g. /var/log/zeroMQcore/project.log  
-	 * 
-	 * @throws Exception if there is an issue start, running or shutting down the MessageLogger. 
 	 */
-	public static void main( String[] args) throws Exception {
+	public static void main( String[] args) {
 		
 		MessageLogger messageLogger = new MessageLogger( args[0], args[1], args[2]);
-		messageLogger.start();
+		messageLogger.run();
 	}
 	
 }

@@ -1,4 +1,4 @@
-package com.testlims.zeroMQcore;
+package com.testlims.messageLogger;
 
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
