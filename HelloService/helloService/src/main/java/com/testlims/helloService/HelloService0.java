@@ -1,4 +1,4 @@
-package com.testlims.zeroMQcore;
+package com.testlims.helloService;
 
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;

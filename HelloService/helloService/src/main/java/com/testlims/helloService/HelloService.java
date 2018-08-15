@@ -1,4 +1,4 @@
-package com.testlims.zeroMQcore;
+package com.testlims.helloService;
 
 import org.json.JSONException;
 import org.json.JSONObject;
