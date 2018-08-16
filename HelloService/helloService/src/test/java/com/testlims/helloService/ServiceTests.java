@@ -36,7 +36,6 @@ public class ServiceTests
 	static final DateFormat fileDateFormatter 	= new SimpleDateFormat( fileDateFormat);
 	
 	Date	startTime 		= null;
-//	Process loggerProcess 	= null;
 	
 	/**
 	 * Create the test case
@@ -52,7 +51,7 @@ public class ServiceTests
 		return new TestSuite( LoggerTests.class);
     } */
 	
-/*	@BeforeClass
+	@BeforeClass
 	public static void removeOldLogFiles() {	
 		File logDirectory = new File( "C:/var/log/zeroMQcore");
 		File[] logFileList = logDirectory.listFiles();
@@ -60,25 +59,30 @@ public class ServiceTests
 		for (int f=0; f<logFileList.length; f++)
 		{	File logFile = logFileList[f];
 			
-			if (!logFile.delete()) {
-				System.out.println( "LoggerTests.removeOldLogFiles: " + dateFormatter.format( new Date()) + 
-					" FAILED TO DELETE " + logFile.getName());
+			if (!logFile.getName().equals( "project.log")) {
+				if (!logFile.delete()) {
+					System.out.println( "LoggerTests.removeOldLogFiles: " + dateFormatter.format( new Date()) + 
+							" FAILED TO DELETE " + logFile.getName());
+				}
 			}
 		}
 	}
 	
-/*	@Before
-	public void startServices() throws InterruptedException, IOException {
-		startTime = new Date();
+	@Before
+	public void archiveLogFile() throws InterruptedException {
+		// Archive Log file
+		Context context = ZMQ.context(1);
+		ZMQ.Socket pub2Logger = context.socket( ZMQ.PUB); 
+		pub2Logger.connect( LOGGER_URL); 
 		
-		// Start MessageLogger.jar 
-		String command = "java -jar C:\\Users\\tlims\\jeroMQMSC\\messageLogger.jar " + 
-				LOGGER_URL + " " + LOGGER_TOPIC + " " + LOG_FILE_URL; 
-		Runtime run  = Runtime.getRuntime();
-        loggerProcess = run.exec(command);
-		Thread.sleep(25);
+		Thread.sleep( 20);
+		pub2Logger.send( LOGGER_TOPIC + " " + "ARCIVE_LOG_FILE", 0);
+		pub2Logger.close();
+		context.close();
+
+		startTime = new Date();
 	}
-	*/
+	
 	
 	/**
      * Test of HelloService1
@@ -271,9 +275,7 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		// Send terminate hello service request. 
 		requestClient.send( ("TERMINATE_HELLO_SERVICE").getBytes(), 0);
 		String reply7 = requestClient.recvStr();
-		Thread.sleep(2);
-		
-	//	loggerProcess.destroy();
+		Thread.sleep(10);
 		
 		// ____________________ Check Log File ____________________ 
 		assertNotNull( reply5);
@@ -281,31 +283,20 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		assertNotNull( reply7);
 		Thread.sleep(10);
 		endTime = new Date();
-
-	//	TODO Remove System.out statements. 
-		System.out.println("DEBUG: startTime: " + dateFormatter.format(startTime));
-		System.out.println("DEBUG: endTime  : " + dateFormatter.format(endTime));
 		
 		TreeMap<Integer,String> logFileLines = readLogFile( LOG_FILE_URL);
-		assertTrue( logFileLines.size() >= 6);
+		if( logFileLines.size() < 6) {
+			fail( "logFileLines.size() = " + logFileLines.size() + " < 6");
+		}
 		
 		// Read the log file backwards. 
 		for (Integer lineNumber : logFileLines.keySet()) {
 			String line = logFileLines.get( lineNumber);
-		//	TODO Remove System.out statement. 
-			System.out.println("DEBUG: line: " + line);
 			
 			try { 
 				String timestampString = line.substring( 0, 23);
-			//	TODO Remove System.out statement. 
-				System.out.println("DEBUG: timestampString: " + timestampString);
 				Date timestamp = dateFormatter.parse( timestampString);
-				if (lineNumber == 0) { 
-					assertTrue( timestamp.before( startTime));
-				}
-				else { 
-					assertTrue( timestamp.after( startTime));
-				}
+				assertTrue( timestamp.after( startTime));
 				assertTrue( timestamp.before( endTime));
 			}
 			catch (Exception e) {
@@ -334,7 +325,7 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 				assertTrue( line.contains( "HelloService closing service and logger sockets and terminate context.")); 
 			}
 			else {	
-					fail( "unexpected line " + lineNumber + ": " + line);
+				fail( "unexpected line " + lineNumber + ": " + line);
 			}
 		}
 	}
@@ -382,32 +373,4 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		return lines;
 	}
 	
-	
-/*	@After
-	public void moveLogFile() throws InterruptedException {	
-		// Terminate message logger. 
-		Context context = ZMQ.context(1);
-		ZMQ.Socket pub2Logger = context.socket( ZMQ.PUB); 
-		pub2Logger.connect( LOGGER_URL); 
-		
-		Thread.sleep( 20);
-		pub2Logger.send( LOGGER_TOPIC + " " + "TERMINATE_LOGGER", 0);
-		pub2Logger.close();
-		context.close();
-		
-		loggerProcess.destroy();
-		
-		File logFile = new File( "C:/var/log/zeroMQcore/project.log");
-		
-		if (logFile.exists())
-		{	String timestamp = fileDateFormatter.format( new Date( logFile.lastModified()));
-			File renamedLogFile = new File( "C:/var/log/zeroMQcore/project_" + timestamp + ".log");
-			
-			if (!logFile.renameTo( renamedLogFile)) {
-				System.out.println( "LoggerTests.moveExistingLogFile: " + dateFormatter.format( new Date()) + 
-						" FAILED TO MOVE project.log to " + renamedLogFile.getName());
-			}
-		}
-	}
-	*/
 }

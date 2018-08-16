@@ -22,13 +22,18 @@ import com.testlims.utilities.StackTrace;
  *
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
-public class MessageLogger implements Runnable {
+public class MessageLogger extends Thread {
+	private String 		logFileURL			= null;
 	private String 		topicDelimitated 	= null;
 	private Context 	context 			= null;
 	private ZMQ.Socket	logger  			= null;
 	private File 		logFile 			= null;
 	private static BufferedWriter logWriter	= null;
 	
+	static final String		dateFormat			= "yyyy-MM-dd'T'HH:mm:ss.SSS";
+	static final String		fileDateFormat		= "yyyy-MM-dd'T'HH.mm.ss.SSS";
+	static final DateFormat dateFormatter 		= new SimpleDateFormat( dateFormat);
+	static final DateFormat fileDateFormatter 	= new SimpleDateFormat( fileDateFormat);	
 	/**
 	 * MessageLogger Constructor 
 	 * 
@@ -37,26 +42,12 @@ public class MessageLogger implements Runnable {
 	 * @param logFileURL The URL of the log file. 
 	 */
 	public MessageLogger(String socketURL, String topic, String logFileURL) {
+		this.logFileURL = logFileURL;
 		topicDelimitated = topic + " ";
-		
-		try {
-			logFile = new File( logFileURL);
-			logWriter = new BufferedWriter( new FileWriter( logFile, true));
-			log( "MessageLogging Log file " + logFileURL + " opened.");
-		} 
-		catch (IOException ioe) {
-			System.err.print( StackTrace.asString( "MessageLogging ERROR: Failed to open log file " + logFile, ioe));
-			try { 
-				if (logWriter != null) 
-				{	logWriter.close(); 
-					logWriter = null;
-				}
-			}
-			catch (IOException e1) { /** Do nothing */ }
-		}
+		startLogWritter();
 		
 		if (logWriter != null) {
-		//	setDaemon(true);
+			setDaemon(true);
 			context = ZMQ.context(1);
 			logger = context.socket( ZMQ.SUB);
 			logger.subscribe( topic.getBytes());
@@ -75,7 +66,11 @@ public class MessageLogger implements Runnable {
 			String topicAndMessage = logger.recvStr(); 
 			String message = topicAndMessage.replace( topicDelimitated, "");
 			
-			if (message.equals( "TERMINATE_LOGGER")) {
+			if (message.equals( "ARCIVE_LOG_FILE")) {
+				log( "MessageLogging received ARCIVE_LOG_FILE");
+				archiveLogFile();
+			}
+			else if (message.equals( "TERMINATE_LOGGER")) {
 				log( "MessageLogging received TERMINATE_LOGGER");
 				break;
 			}
@@ -97,6 +92,44 @@ public class MessageLogger implements Runnable {
 		context.close();
 	}
 	
+	private void startLogWritter() {
+		try {
+			logFile = new File( logFileURL);
+			logWriter = new BufferedWriter( new FileWriter( logFile, true));
+			log( "MessageLogging Log file " + logFileURL + " opened.");
+		} 
+		catch (IOException ioe) {
+			System.err.print( StackTrace.asString( "MessageLogging ERROR: Failed to open log file " + logFile, ioe));
+			try { 
+				if (logWriter != null) 
+				{	logWriter.close(); 
+					logWriter = null;
+				}
+			}
+			catch (IOException e1) { /** Do nothing */ }
+		}
+	}
+	
+	private void archiveLogFile() {
+		try {
+			logWriter.flush();
+			logWriter.close();
+			
+			String timestamp = fileDateFormatter.format( new Date( logFile.lastModified()));
+			File renamedLogFile = new File( "C:/var/log/zeroMQcore/project_" + timestamp + ".log");
+				
+			if (!logFile.renameTo( renamedLogFile)) {
+				System.err.println( "LoggerTests.moveExistingLogFile: " + dateFormatter.format( new Date()) + 
+							" FAILED TO MOVE project.log to " + renamedLogFile.getName());
+			}
+			
+			startLogWritter();
+		} catch (IOException e) {
+			System.err.print( StackTrace.asString( "ERROR: Unable to Archive Log File: ", e));
+		}
+		
+	}
+
 	/**
 	 * Log the supplied messageString to the log file. 
 	 * 
