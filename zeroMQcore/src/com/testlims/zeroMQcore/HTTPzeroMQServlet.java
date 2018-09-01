@@ -48,9 +48,9 @@ public class HTTPzeroMQServlet extends HttpServlet {
 	 * HTTPzeroMQServlet Constructor  */
 	public HTTPzeroMQServlet() {
 		super();
-		
 	//	TODO:  Remove System.out statement. 
 		System.out.println( "HTTPzeroMQServlet running.");
+		
 	//	TODO: The loggerURL, loggerTopic, and helloServiceURL should be read in from a properties file. 
 		String loggerURL		= "tcp://localhost:5555"; 
 		String loggerTopic		= "Project_Log"; 

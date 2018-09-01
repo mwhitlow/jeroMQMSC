@@ -1,0 +1,10 @@
+Starting MessageLogger and HelloService using scripts runMessageLogger.cmd and 
+runHelloSerive.cmd in C:\Users\tlims\jeroMQMSC\scripts 
+
+Window Command Prompt #1
+>cd C:\Users\tlims\jeroMQMSC\scripts
+>runMessageLogger.cmd tcp://localhost:5556 Project_Log /var/log/zeroMQcore/project.log
+
+Window Command Prompt #2
+>cd C:\Users\tlims\jeroMQMSC\scripts
+>runHelloService.cmd tcp://localhost:5557 tcp://localhost:5556 Project_Log 

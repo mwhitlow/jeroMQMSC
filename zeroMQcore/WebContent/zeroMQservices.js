@@ -14,9 +14,16 @@ function displayHelloService() {
 	xhttp.onload = function() {
 		if (this.readyState == 4 && this.status == 200) {
 			var responseJSON = JSON.parse( xhttp.responseText);
+		//	TODO:  Remove alert	
 			alert( JSON.stringify( requestJSON, null, 2));
-			cpvResponse( responseJSON, "#cpvSVG");
+			displayHelloServiceHTML( responseJSON, "#hello__service");
 		}
 	};
 	xhttp.send( '{\"requestType\":\"sendHTML\"}');
+}
+
+function displayHelloServiceHTML(json, helloServiceElementId) {	
+//	TODO:  Remove alert	
+	alert( JSON.stringify( json, null, 2));
+	document.getElementById( helloServiceElementId).value = json.html;
 }
