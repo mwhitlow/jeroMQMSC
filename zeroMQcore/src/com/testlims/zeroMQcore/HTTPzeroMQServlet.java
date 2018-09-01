@@ -52,19 +52,30 @@ public class HTTPzeroMQServlet extends HttpServlet {
 		System.out.println( "HTTPzeroMQServlet running.");
 		
 	//	TODO: The loggerURL, loggerTopic, and helloServiceURL should be read in from a properties file. 
-		String loggerURL		= "tcp://localhost:5555"; 
+		String loggerURL		= "tcp://localhost:5556"; 
 		String loggerTopic		= "Project_Log"; 
-		String helloServiceURL	= "tcp://localhost:5556";  
+		String helloServiceURL	= "tcp://localhost:5557";  
 		context = ZMQ.context(1); 
 		
 		pub2Logger = context.socket( ZMQ.PUB);
 		pub2Logger.connect( loggerURL); 
 		loggerTopicDelimitated = loggerTopic + " ";
-		pub2Logger.send( ( "HTTPzeroMQServlet:PUB socket to MessageLogger connected to " + loggerURL).getBytes());
+	//	TODO:  Remove System.out statement. 
+		System.out.println( "HTTPzeroMQServlet:PUB socket to MessageLogger connected to " + loggerURL);
 			
 		reqHelloService = context.socket( ZMQ.REQ);
 		reqHelloService.connect( helloServiceURL);
-		pub2Logger.send( ( "HTTPzeroMQServlet:REQ socket to HelloService connected to " + helloServiceURL).getBytes());
+	//	TODO:  Remove System.out statement. 
+		System.out.println( "HTTPzeroMQServlet:REQ socket to HelloService connected to " + helloServiceURL);
+		
+		try {
+			Thread.sleep( 20);
+			pub2Logger.send( ( "HTTPzeroMQServlet:PUB socket to MessageLogger connected to " + loggerURL).getBytes());
+			pub2Logger.send( ( "HTTPzeroMQServlet:REQ socket to HelloService connected to " + helloServiceURL).getBytes());
+			
+		} catch (InterruptedException e) {
+			System.err.println( "HTTPzeroMQServlet InterruptedException Thread.sleep( 50)");
+		}
 	}
 	
 	/**
@@ -119,6 +130,8 @@ public class HTTPzeroMQServlet extends HttpServlet {
 		response.setStatus( httpStatusCode);
 		PrintWriter writer = response.getWriter();
 		try {
+		//	TODO:  Remove System.out 
+			System.out.println( "HTTPzeroMQServlet doPost:" + requestId + ":" + requestType + ".response: " + reply);
 			JSONObject responseJSON = new JSONObject( reply);
 			response.setContentType( "application/json; charset=utf-8");
 			writer.println( responseJSON.toString());

@@ -14,8 +14,6 @@ function displayHelloService() {
 	xhttp.onload = function() {
 		if (this.readyState == 4 && this.status == 200) {
 			var responseJSON = JSON.parse( xhttp.responseText);
-		//	TODO:  Remove alert	
-			alert( JSON.stringify( requestJSON, null, 2));
 			displayHelloServiceHTML( responseJSON, "#hello__service");
 		}
 	};
@@ -25,5 +23,5 @@ function displayHelloService() {
 function displayHelloServiceHTML(json, helloServiceElementId) {	
 //	TODO:  Remove alert	
 	alert( JSON.stringify( json, null, 2));
-	document.getElementById( helloServiceElementId).value = json.html;
+	document.getElementById( helloServiceElementId).value = json.html;  // TODO:  Check response JSON element.
 }

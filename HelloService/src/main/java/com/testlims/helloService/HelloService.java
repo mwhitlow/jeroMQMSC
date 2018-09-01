@@ -66,6 +66,12 @@ public class HelloService extends Thread {
 		
 		service = context.socket( ZMQ.REP);
 		service.bind( socketURL);
+		try {
+			Thread.sleep( 20);
+		} catch (InterruptedException e) {
+			System.err.println( "HelloService InterruptedException Thread.sleep( 20)");
+		}
+		pub2Logger.send( loggerTopicDelimitated + "HelloService started", 0);
 	}
 	
 	/** 
@@ -147,8 +153,7 @@ public class HelloService extends Thread {
 	 * args[1]:  The URL that the logger will be bound to, e.g. tcp://127.0.0.1:5555  <br>
 	 * args[2]:  The topic used by the logger, e.g. Project_Log. 
 	 */
-	public static void main( String[] args) {
-		
+	public static void main( String[] args) { 
 		HelloService helloService = new HelloService( args[0], args[1], args[2]);
 		helloService.run();
 	}
