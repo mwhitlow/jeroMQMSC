@@ -1,3 +1,17 @@
+Set main in HelloService.jar file:  
+1. Open HelloService.jar using 7-Zip
+   A. Open the META-INF folder. 
+   B. Edit the MANIFEST.MF to this: 
+Manifest-Version: 1.0
+Class-Path: .
+Main-Class: com.testlims.helloService.HelloService
+
+
+   C. Close the file after editing it, and Click OK buttom with prompted by 
+      "The 'MANIFEST.MF' was modified.  Do you want to update it in the archive? 
+2. Close 7-Zip 
+
+
 Starting MessageLogger and HelloService using scripts runMessageLogger.cmd and 
 runHelloSerive.cmd in C:\Users\tlims\jeroMQMSC\scripts 
 
@@ -8,3 +22,4 @@ Window Command Prompt #1
 Window Command Prompt #2
 >cd C:\Users\tlims\jeroMQMSC\scripts
 >runHelloService.cmd tcp://localhost:5557 tcp://localhost:5556 Project_Log 
+
