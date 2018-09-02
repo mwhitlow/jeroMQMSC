@@ -119,10 +119,9 @@ public class HelloService extends Thread {
 						pub2Logger.send( loggerTopicDelimitated + logRequestMessage, 0);
 						
 						StringBuilder html = new StringBuilder();
-						html.append("<form class=\"helloForm\">\n" +
-									"  Name: <input type=\"text\" name=\"name\" />\n" +
-									"  <br />\n" +
-									"  <input type=\"submit\" value=\"Submit\" />\n" +
+						html.append("<form class=\"helloForm\">" +
+									"  Name: <input type=\"text\" name=\"name\" />" +
+									"  <input type=\"button\" value=\"Submit\" />" +
 									"</form>");
 						responseJSON.put( "requestId",		requestId);
 						responseJSON.put( "requestType",	requestType);

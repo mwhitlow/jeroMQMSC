@@ -14,14 +14,16 @@ function displayHelloService() {
 	xhttp.onload = function() {
 		if (this.readyState == 4 && this.status == 200) {
 			var responseJSON = JSON.parse( xhttp.responseText);
-			displayHelloServiceHTML( responseJSON, "#hello__service");
+			displayHelloServiceHTML( responseJSON);
 		}
 	};
 	xhttp.send( '{\"requestType\":\"sendHTML\"}');
 }
 
-function displayHelloServiceHTML(json, helloServiceElementId) {	
+function displayHelloServiceHTML(json) {	
+	var helloServiceHTML = json.html;
 //	TODO:  Remove alert	
-	alert( JSON.stringify( json, null, 2));
-	document.getElementById( helloServiceElementId).value = json.html;  // TODO:  Check response JSON element.
+	alert( "helloServiceHTML: " + helloServiceHTML);
+	document.getElementById( "hello__service").innerHTML = helloServiceHTML;  
+//	TODO:  Check response JSON element.
 }
