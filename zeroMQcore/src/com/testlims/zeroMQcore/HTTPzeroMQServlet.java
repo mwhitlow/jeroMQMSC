@@ -14,7 +14,6 @@ import org.json.JSONObject;
 import org.zeromq.ZMQ;
 import org.zeromq.ZMQ.Context;
 
-import com.testlims.utilities.StackTrace;
 
 /**
  * HTTPzeroMQServlet handles HTTP POST requests, and sends them to zeroMQ request (REQ)
@@ -48,8 +47,6 @@ public class HTTPzeroMQServlet extends HttpServlet {
 	 * HTTPzeroMQServlet Constructor  */
 	public HTTPzeroMQServlet() {
 		super();
-	//	TODO:  Remove System.out statement. 
-		System.out.println( "HTTPzeroMQServlet running.");
 		
 	//	TODO: The loggerURL, loggerTopic, and helloServiceURL should be read in from a properties file. 
 		String loggerURL		= "tcp://localhost:5556"; 
@@ -60,13 +57,9 @@ public class HTTPzeroMQServlet extends HttpServlet {
 		pub2Logger = context.socket( ZMQ.PUB);
 		pub2Logger.connect( loggerURL); 
 		loggerTopicDelimitated = loggerTopic + " ";
-	//	TODO:  Remove System.out statement. 
-		System.out.println( "HTTPzeroMQServlet:PUB socket to MessageLogger connected to " + loggerURL);
 			
 		reqHelloService = context.socket( ZMQ.REQ);
 		reqHelloService.connect( helloServiceURL);
-	//	TODO:  Remove System.out statement. 
-		System.out.println( "HTTPzeroMQServlet:REQ socket to HelloService connected to " + helloServiceURL);
 		
 		try {
 			Thread.sleep( 20);
@@ -101,8 +94,6 @@ public class HTTPzeroMQServlet extends HttpServlet {
 		
 		try {	
 			JSONObject requestJSON = new JSONObject( jsonBuffer.toString());
-		//	TODO:  Remove system.out
-			System.out.println("requestJSON: " + requestJSON.toString( 3));
 			
 			// ___________________ Log the Request ___________________ 
 			requestType = requestJSON.getString( "requestType");
@@ -114,8 +105,6 @@ public class HTTPzeroMQServlet extends HttpServlet {
 			reqHelloService.send( requestJSON.toString().getBytes(), 0);
 		}
 		catch(Exception e) { 
-		//	TODO:  Remove system.out
-			System.out.println("Exception using requestJSON: " + StackTrace.asString(e));
 			//             Failed to process as JSON Object
 			// ______________ Log the Request as String ______________ 
 			requestType = jsonBuffer.toString();
@@ -130,8 +119,6 @@ public class HTTPzeroMQServlet extends HttpServlet {
 		response.setStatus( httpStatusCode);
 		PrintWriter writer = response.getWriter();
 		try {
-		//	TODO:  Remove System.out 
-			System.out.println( "HTTPzeroMQServlet doPost:" + requestId + ":" + requestType + ".response: " + reply);
 			JSONObject responseJSON = new JSONObject( reply);
 			response.setContentType( "application/json; charset=utf-8");
 			writer.println( responseJSON.toString());

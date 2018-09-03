@@ -133,12 +133,10 @@ public class HelloService extends Thread {
 									"		if (this.readyState == 4 && this.status == 200) {" + 
 									"			var responseJSON = JSON.parse( xhttp.responseText);" + 
 									"			var helloName = responseJSON.response;" + 
-									"			alert( \"helloName: \" + helloName);" + 
 									"			document.getElementById( \"hello__service-sayHello\").innerHTML = helloName;" + 
 									"		}" + 
 									"	};" + 
 									"	var name = document.getElementById( \"hello__service-name\").value;" + 
-									"	alert( \"name: \" + name);" + 
 									"	var requestJSON = '{\"requestType\":\"sayHello\",\"name\":\"' + name + '\"}';" + 
 									"	xhttp.send( requestJSON);" +
 									"}" );
