@@ -18,7 +18,7 @@ SET logFileURL=%3
 
 ECHO %me% PWD:          %parent%
 ECHO.%me% Socket URL:   %socketURL% 
-ECHO.%me% Topic:        %topic% 
+ECHO.%me% Logger Topic: %topic% 
 ECHO.%me% Log File URL: %logFileURL% 
 ECHO.%me%
 ECHO.%me% Run MessageLogger

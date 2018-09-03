@@ -19,7 +19,7 @@ SET topic=%3
 ECHO %me% PWD:          %parent%
 ECHO.%me% Socket URL:   %socketURL% 
 ECHO.%me% Logger URL:   %loggerURL% 
-ECHO.%me% Topic:        %topic% 
+ECHO.%me% Logger Topic: %topic% 
 ECHO.%me%
 ECHO.%me% Run HelloService
 

@@ -14,16 +14,24 @@ function displayHelloService() {
 	xhttp.onload = function() {
 		if (this.readyState == 4 && this.status == 200) {
 			var responseJSON = JSON.parse( xhttp.responseText);
-			displayHelloServiceHTML( responseJSON);
+			document.getElementById( "hello__service").innerHTML = responseJSON.html;  
 		}
 	};
 	xhttp.send( '{\"requestType\":\"sendHTML\"}');
 }
 
-function displayHelloServiceHTML(json) {	
-	var helloServiceHTML = json.html;
-//	TODO:  Remove alert	
-	alert( "helloServiceHTML: " + helloServiceHTML);
-	document.getElementById( "hello__service").innerHTML = helloServiceHTML;  
-//	TODO:  Check response JSON element.
+function helloService_sayHello() { 
+	var xhttp = new XMLHttpRequest();
+	xhttp.open( 'POST', zeroMQcoreURL + "/services", true);
+	xhttp.setRequestHeader( 'Content-type', 'application/json');
+	xhttp.onload = function() {
+		if (this.readyState == 4 && this.status == 200) {
+			var responseJSON = JSON.parse( xhttp.responseText);
+			var helloName = responseJSON.response;
+			document.getElementById( "hello__service-sayHello").innerHTML = helloName;  
+		}
+	};
+	var name = document.getElementById( "hello__service-name").value;
+	var requestJSON = '{\"requestType\":\"sayHello\",\"name\":\"' + name + '\"}';
+	xhttp.send( requestJSON);
 }

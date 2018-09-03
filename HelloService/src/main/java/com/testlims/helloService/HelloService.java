@@ -119,13 +119,33 @@ public class HelloService extends Thread {
 						pub2Logger.send( loggerTopicDelimitated + logRequestMessage, 0);
 						
 						StringBuilder html = new StringBuilder();
-						html.append("<form class=\"helloForm\">" +
-									"  Name: <input type=\"text\" name=\"name\" />" +
-									"  <input type=\"button\" value=\"Submit\" />" +
-									"</form>");
+						html.append("<form class=\"helloForm\">Name: <input id=\"hello__service-name\" type=\"text\" name=\"name\" />" + 
+									"  <input type=\"button\" value=\"Submit\" onclick=\"helloService_sayHello()\" />" +
+									"</form>" + 
+									"<div>Response: <span id=\"hello__service-sayHello\"></span></div>");
+						StringBuilder sayHelloScript = new StringBuilder();
+						sayHelloScript.append(
+									"function helloService_sayHello() { " + 
+									"	var xhttp = new XMLHttpRequest();" + 
+									"	xhttp.open( 'POST', zeroMQcoreURL + \"/services\", true);" + 
+									"	xhttp.setRequestHeader( 'Content-type', 'application/json');" + 
+									"	xhttp.onload = function() {" + 
+									"		if (this.readyState == 4 && this.status == 200) {" + 
+									"			var responseJSON = JSON.parse( xhttp.responseText);" + 
+									"			var helloName = responseJSON.response;" + 
+									"			alert( \"helloName: \" + helloName);" + 
+									"			document.getElementById( \"hello__service-sayHello\").innerHTML = helloName;" + 
+									"		}" + 
+									"	};" + 
+									"	var name = document.getElementById( \"hello__service-name\").value;" + 
+									"	alert( \"name: \" + name);" + 
+									"	var requestJSON = '{\"requestType\":\"sayHello\",\"name\":\"' + name + '\"}';" + 
+									"	xhttp.send( requestJSON);" +
+									"}" );
 						responseJSON.put( "requestId",		requestId);
 						responseJSON.put( "requestType",	requestType);
 						responseJSON.put( "html", 			html.toString());
+						responseJSON.put( "script", 		sayHelloScript.toString());
 						service.send( responseJSON.toString().getBytes(), 0);
 
 						pub2Logger.send( loggerTopicDelimitated + logResponseMessage, 0);
