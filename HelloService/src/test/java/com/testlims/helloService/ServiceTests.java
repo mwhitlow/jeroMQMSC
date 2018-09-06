@@ -175,7 +175,9 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 			Thread.sleep(2);
 			
 			// ____________________ Check Results _____________________ 
-			assertEquals( "{\"requestType\":\"sendHTML\",\"requestId\":\"1\",\"html\":\"<form class=\\\"helloForm\\\">\\n  Name: <input type=\\\"text\\\" name=\\\"name\\\" />\\n  <br />\\n  <input type=\\\"submit\\\" value=\\\"Submit\\\" />\\n<\\/form>\"}", 
+			assertEquals( "{\"requestType\":\"sendHTML\",\"requestId\":\"1\",\"html\":\"<form class=\\\"helloForm\\\">Name: <input id=\\\"hello__service-name\\\" type=\\\"text\\\" name=\\\"name\\\" />"
+						+ "  <input type=\\\"button\\\" value=\\\"Submit\\\" onclick=\\\"helloService_sayHello()\\\" /><\\/form><div>Response: <span id=\\\"hello__service-sayHello\\\"><\\/span><\\/div>\","
+						+ "\"script\":\"function helloService_sayHello() { \\tvar xhttp = new XMLHttpRequest();\\txhttp.open( 'POST', zeroMQcoreURL + \\\"/services\\\", true);\\txhttp.setRequestHeader( 'Content-type', 'application/json');\\txhttp.onload = function() {\\t\\tif (this.readyState == 4 && this.status == 200) {\\t\\t\\tvar responseJSON = JSON.parse( xhttp.responseText);\\t\\t\\tvar helloName = responseJSON.response;\\t\\t\\tdocument.getElementById( \\\"hello__service-sayHello\\\").innerHTML = helloName;\\t\\t}\\t};\\tvar name = document.getElementById( \\\"hello__service-name\\\").value;\\tvar requestJSON = '{\\\"requestType\\\":\\\"sayHello\\\",\\\"name\\\":\\\"' + name + '\\\"}';\\txhttp.send( requestJSON);}\"}", 
 							reply1);
 			assertEquals( "HelloService being terminated", reply2);
 		}
@@ -307,21 +309,24 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 				assertTrue( line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened."));
 			}
 			else if (lineNumber == 1) { 
-				assertTrue( line.contains( "HelloService:5:sendHTML.request")); 
+				assertTrue( line.contains( "HelloService started")); 
 			}
 			else if (lineNumber == 2) { 
-				assertTrue( line.contains( "HelloService:5:sendHTML.response")); 
+				assertTrue( line.contains( "HelloService:5:sendHTML.request")); 
 			}
 			else if (lineNumber == 3) { 
-				assertTrue( line.contains( "HelloService:6:sayHello.request:Tess")); 
+				assertTrue( line.contains( "HelloService:5:sendHTML.response")); 
 			}
 			else if (lineNumber == 4) { 
-				assertTrue( line.contains( "HelloService:6:sayHello.response:Hello Tess")); 
+				assertTrue( line.contains( "HelloService:6:sayHello.request:Tess")); 
 			}
 			else if (lineNumber == 5) { 
-				assertTrue( line.contains( "HelloService request: TERMINATE_HELLO_SERVICE")); 
+				assertTrue( line.contains( "HelloService:6:sayHello.response:Hello Tess")); 
 			}
 			else if (lineNumber == 6) { 
+				assertTrue( line.contains( "HelloService request: TERMINATE_HELLO_SERVICE")); 
+			}
+			else if (lineNumber == 7) { 
 				assertTrue( line.contains( "HelloService closing service and logger sockets and terminate context.")); 
 			}
 			else {	

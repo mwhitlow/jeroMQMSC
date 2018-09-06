@@ -103,17 +103,9 @@ public class HelloService extends Thread {
 					logRequestMessage	+= requestId + ":" + requestType + ".request";
 					logResponseMessage	+= requestId + ":" + requestType + ".response";
 					
-					if (requestType.equals( "sayHello") && requestJSON.has( "name")) { 
-						String name = requestJSON.getString( "name");
-						pub2Logger.send( loggerTopicDelimitated + logRequestMessage + ":" + name, 0);
-						
-						String responseText = "Hello " + name;
-						responseJSON.put( "requestId",		requestId);
-						responseJSON.put( "requestType",	requestType);
-						responseJSON.put( "response", 		responseText);
-						service.send( responseJSON.toString().getBytes(), 0);
-
-						pub2Logger.send( loggerTopicDelimitated + logResponseMessage + ":" + responseText, 0);
+					if (requestType.equals( "sayHello")) { 
+						SayHelloResponse serviceRepsonse = new SayHelloResponse( service, pub2Logger, loggerTopicDelimitated);
+						serviceRepsonse.send( requestJSON, logRequestMessage, logResponseMessage);
 					}
 					else if (requestType.equals( "sendHTML")) {
 						pub2Logger.send( loggerTopicDelimitated + logRequestMessage, 0);

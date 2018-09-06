@@ -12,10 +12,10 @@ body {
     background-color: #E0FFFF;
 }
 
-button.displayHelloService__button, 
-button.displayHelloService__button:active, 
-button.displayHelloService__button:focus,
-button.displayHelloService__button:target {
+button.helloService__button, 
+button.helloService__button:active, 
+button.helloService__button:focus,
+button.helloService__button:target {
 	display: block;
 	margin: 0 1rem;
 	padding: 0.1rem 1rem;
