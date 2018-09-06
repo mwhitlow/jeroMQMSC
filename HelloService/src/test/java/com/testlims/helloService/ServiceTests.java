@@ -36,21 +36,7 @@ public class ServiceTests
 	static final DateFormat fileDateFormatter 	= new SimpleDateFormat( fileDateFormat);
 	
 	Date	startTime 		= null;
-	
-	/**
-	 * Create the test case
-	 *
-	 * @param testName name of the test case
-	 *
-	public LoggerTests( String testName) {
-		super( testName);
-	} */
-
-	/**  @return the suite of tests being tested. 
-	public static junit.framework.Test suite() {
-		return new TestSuite( LoggerTests.class);
-    } */
-	
+		
 	@BeforeClass
 	public static void removeOldLogFiles() {	
 		File logDirectory = new File( "C:/var/log/zeroMQcore");
@@ -83,63 +69,6 @@ public class ServiceTests
 		startTime = new Date();
 	}
 	
-	
-	/**
-     * Test of HelloService1
-     * <p>
-     * Unlike most unit tests, this test only checks that no exception was thrown. 
-     * The actual logging is going to System.out, and should look like: 
-<pre>
-helloService1Test: 2018-07-10T19:50:17.367 helloService started
-HelloService waiting in run()
-helloService1Test: sending requestId 0 requestString Tess
-HelloService received request: Tess
-HelloService response sent Hello Tess
-HelloService waiting in run()
-helloService1Test: sending requestId 1 requestString TERMINATE_HELLO_SERVICE
-HelloService received request: TERMINATE_HELLO_SERVICE
-HelloService received TERMINATE_HELLO_SERVICE
-HelloService after while loop -&gt; Close service socket and terminate context. 
-</pre>
-     * Note that it takes about 20 milliseconds before the HelloService is ready to receive requests. 
-	 */
-	@Test
-    public void helloService1Test() {
-		final String SOCKET_URL	= "tcp://localhost:5557"; 
-		
-		try {
-			// Start HelloService1 in a tread. 
-			HelloService1 helloService = new HelloService1();
-			helloService.start();
-			System.out.println( "helloService1Test: " + dateFormatter.format( new Date()) + " helloService started");
-			
-			// Start Request Client
-			Context clientContext = ZMQ.context(1);
-			ZMQ.Socket requestClient = clientContext.socket( ZMQ.REQ); 
-			requestClient.connect( SOCKET_URL); 
-			
-			Thread.sleep(25);
-			int requestId = 0;
-			String requestString = "Tess";
-			System.out.println( "helloService1Test: sending requestId " + requestId + " requestString " + requestString);
-			requestClient.send( requestString.getBytes(), 0);
-			String reply = requestClient.recvStr();
-			assertEquals( "Hello " + requestString, reply);
-			
-			requestId++;
-			System.out.println( "helloService1Test: sending requestId " + requestId + " requestString TERMINATE_HELLO_SERVICE");
-			requestClient.send( ("TERMINATE_HELLO_SERVICE").getBytes(), 0);
-			reply = requestClient.recvStr();
-			assertEquals( "HelloService being terminated", reply);
-			
-	        Thread.sleep(10);
-			requestClient.close();
-			clientContext.close();
-		}
-		catch (Exception e) {
-			fail( StackTrace.asString(e));
-		}
-    }
 	
 	/**
      * Test of HelloService's sendHTML method. 
@@ -189,8 +118,8 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 	/**
      * Test the sayHello request in HelloService using Mock HTTP request
 	 * 
-	 * @throws InterruptedException 
-	 * @throws IOException 
+	 * @throws InterruptedException if there is an issue putting the thread to sleep. 
+	 * @throws IOException if there is an issue reading the log file. 
 	 */
 	@Test
     public void helloServiceShouldReturnHelloName() throws InterruptedException, IOException {
@@ -227,7 +156,8 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 		assertEquals( "{\"requestType\":\"sayHello\",\"requestId\":\"3\",\"response\":\"Hello Tess\"}", reply3);
 		assertEquals( "HelloService being terminated", 	reply4);
 	}
-	
+
+	@Test
 	/**
      * Check the logging of HelloService using Mock HTTP request
      * <p>
@@ -236,7 +166,6 @@ HelloService after while loop -&gt; Close service socket and terminate context.
 	 * @throws InterruptedException 
 	 * @throws IOException 
 	 */
-	@Test
     public void helloServiceCheckLog() throws InterruptedException, IOException {
 		final String SOCKET_URL	= "tcp://localhost:5557"; 
 

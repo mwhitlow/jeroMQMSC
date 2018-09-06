@@ -29,19 +29,6 @@ public class LoggerTests
 	static final DateFormat dateFormatter 		= new SimpleDateFormat( dateFormat);
 	static final DateFormat fileDateFormatter 	= new SimpleDateFormat( fileDateFormat);
 	
-	/**
-	 * Create the test case
-	 *
-	 * @param testName name of the test case
-	 *
-	public LoggerTests( String testName) {
-		super( testName);
-	} */
-
-	/**  @return the suite of tests being tested. 
-	public static junit.framework.Test suite() {
-		return new TestSuite( LoggerTests.class);
-    } */
 	
 	@BeforeClass
 	public static void removeOldLogFiles() {	
