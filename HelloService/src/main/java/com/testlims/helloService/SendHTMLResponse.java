@@ -47,7 +47,7 @@ public class SendHTMLResponse {
 		
 		StringBuilder html = new StringBuilder();
 		html.append("<form class=\"helloForm\">Name: <input id=\"hello__service-name\" type=\"text\" name=\"name\" />" + 
-					"  <input type=\"button\" value=\"Submit\" onclick=\"helloService_sayHello()\" />" +
+					"  <input type=\"button\" class=\"helloService__button\" value=\"Submit\" onclick=\"helloService_sayHello()\" />" +
 					"</form>" + 
 					"<div>Response: <span id=\"hello__service-sayHello\"></span></div>");
 		StringBuilder sayHelloScript = new StringBuilder();

@@ -97,7 +97,7 @@ public class MockHTTPzeroMQTests
 					+ "\"requestType\":\"sendHTML\","
 					+ "\"requestId\":\"1\","
 					+ "\"html\":\"<form class=\\\"helloForm\\\">Name: <input id=\\\"hello__service-name\\\" type=\\\"text\\\" name=\\\"name\\\" />"
-					+ "  <input type=\\\"button\\\" value=\\\"Submit\\\" onclick=\\\"helloService_sayHello()\\\" />"
+					+ "  <input type=\\\"button\\\" class=\\\"helloService__button\\\" value=\\\"Submit\\\" onclick=\\\"helloService_sayHello()\\\" />"
 					+ "<\\/form><div>Response: <span id=\\\"hello__service-sayHello\\\"><\\/span><\\/div>\","
 					+ "\"script\":\"function helloService_sayHello() { \\tvar xhttp = new XMLHttpRequest();"
 					+ "\\txhttp.open( 'POST', zeroMQcoreURL + \\\"/services\\\", true);\\txhttp.setRequestHeader( 'Content-type', 'application/json');\\txhttp.onload = function() {\\t\\tif (this.readyState == 4 && this.status == 200)"
