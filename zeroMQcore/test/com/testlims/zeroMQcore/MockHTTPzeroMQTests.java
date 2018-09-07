@@ -1,7 +1,5 @@
-package com.testlims.helloService;
+package com.testlims.zeroMQcore;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -23,19 +21,20 @@ import org.zeromq.ZMQ.Context;
 import com.testlims.utilities.StackTrace;
 
 /**
- * Unit tests for Hello Service(s). 
+ * Unit tests of HellowServices using MockHTTPzeroMQ 
  */
-public class ServiceTests 
+public class MockHTTPzeroMQTests 
 {
 	static final String 	LOG_FILE_URL		= "/var/log/zeroMQcore/project.log"; 
 	static final String 	LOGGER_TOPIC		= "Project_Log"; 
 	static final String 	LOGGER_URL			= "tcp://localhost:5556"; 
+	static final String 	SOCKET_URL			= "tcp://localhost:5557"; 
 	static final String		dateFormat			= "yyyy-MM-dd'T'HH:mm:ss.SSS";
 	static final String		fileDateFormat		= "yyyy-MM-dd'T'HH.mm.ss.SSS";
 	static final DateFormat dateFormatter 		= new SimpleDateFormat( dateFormat);
 	static final DateFormat fileDateFormatter 	= new SimpleDateFormat( fileDateFormat);
 	
-	Date	startTime 		= null;
+	Date startTime = null;
 		
 	@BeforeClass
 	public static void removeOldLogFiles() {	
@@ -45,11 +44,9 @@ public class ServiceTests
 		for (int f=0; f<logFileList.length; f++)
 		{	File logFile = logFileList[f];
 			
-			if (!logFile.getName().equals( "project.log")) {
-				if (!logFile.delete()) {
-					System.out.println( "LoggerTests.removeOldLogFiles: " + dateFormatter.format( new Date()) + 
-							" FAILED TO DELETE " + logFile.getName());
-				}
+			if (!logFile.delete()) {
+				System.out.println( "MockHTTPzeroMQTests.removeOldLogFiles: " + dateFormatter.format( new Date()) + 
+						" FAILED TO DELETE " + logFile.getName());
 			}
 		}
 	}
@@ -77,38 +74,37 @@ public class ServiceTests
 	 */
 	@Test
     public void helloServiceShouldReturnHTML() {
-		final String SOCKET_URL	= "tcp://localhost:5557"; 
 		
 		try {
-			// Start HelloService 
-			HelloService helloService = new HelloService( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
-			helloService.start();
+			// Start MockHTTPzeroMQ
+			MockHTTPzeroMQ mockHTTPzeroMQ = new MockHTTPzeroMQ( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
 			Thread.sleep(25);
-			
-			// Start Request Client
-			Context clientContext = ZMQ.context(1);
-			ZMQ.Socket requestClient = clientContext.socket( ZMQ.REQ); 
-			requestClient.connect( SOCKET_URL); 
 			
 			String requestId 	= "1";
 			String requestType	= "sendHTML";
 			JSONObject requestJSON = new JSONObject();
 			requestJSON.put( "requestId",	requestId);
 			requestJSON.put( "requestType", requestType);
-			requestClient.send( requestJSON.toString().getBytes(), 0);
-			String reply1 = requestClient.recvStr();
-			Thread.sleep(2);
-			
-			requestClient.send( ("TERMINATE_HELLO_SERVICE").getBytes(), 0);
-			String reply2 = requestClient.recvStr();
+			MockHttpServletRequest mockRequest = new MockHttpServletRequest( requestJSON.toString());
+			MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+			mockHTTPzeroMQ.doPost( mockRequest, mockResponse);
 			Thread.sleep(2);
 			
 			// ____________________ Check Results _____________________ 
-			assertEquals( "{\"requestType\":\"sendHTML\",\"requestId\":\"1\",\"html\":\"<form class=\\\"helloForm\\\">Name: <input id=\\\"hello__service-name\\\" type=\\\"text\\\" name=\\\"name\\\" />"
-						+ "  <input type=\\\"button\\\" value=\\\"Submit\\\" onclick=\\\"helloService_sayHello()\\\" /><\\/form><div>Response: <span id=\\\"hello__service-sayHello\\\"><\\/span><\\/div>\","
-						+ "\"script\":\"function helloService_sayHello() { \\tvar xhttp = new XMLHttpRequest();\\txhttp.open( 'POST', zeroMQcoreURL + \\\"/services\\\", true);\\txhttp.setRequestHeader( 'Content-type', 'application/json');\\txhttp.onload = function() {\\t\\tif (this.readyState == 4 && this.status == 200) {\\t\\t\\tvar responseJSON = JSON.parse( xhttp.responseText);\\t\\t\\tvar helloName = responseJSON.response;\\t\\t\\tdocument.getElementById( \\\"hello__service-sayHello\\\").innerHTML = helloName;\\t\\t}\\t};\\tvar name = document.getElementById( \\\"hello__service-name\\\").value;\\tvar requestJSON = '{\\\"requestType\\\":\\\"sayHello\\\",\\\"name\\\":\\\"' + name + '\\\"}';\\txhttp.send( requestJSON);}\"}", 
-							reply1);
-			assertEquals( "HelloService being terminated", reply2);
+			mockResponse.assertEqualsContentType( "application/json; charset=utf-8");
+			mockResponse.assertEqualsStatus( 200);
+			mockResponse.assertEqualsResponse( "{"
+					+ "\"requestType\":\"sendHTML\","
+					+ "\"requestId\":\"1\","
+					+ "\"html\":\"<form class=\\\"helloForm\\\">Name: <input id=\\\"hello__service-name\\\" type=\\\"text\\\" name=\\\"name\\\" />"
+					+ "  <input type=\\\"button\\\" value=\\\"Submit\\\" onclick=\\\"helloService_sayHello()\\\" />"
+					+ "<\\/form><div>Response: <span id=\\\"hello__service-sayHello\\\"><\\/span><\\/div>\","
+					+ "\"script\":\"function helloService_sayHello() { \\tvar xhttp = new XMLHttpRequest();"
+					+ "\\txhttp.open( 'POST', zeroMQcoreURL + \\\"/services\\\", true);\\txhttp.setRequestHeader( 'Content-type', 'application/json');\\txhttp.onload = function() {\\t\\tif (this.readyState == 4 && this.status == 200)"
+					+ " {\\t\\t\\tvar responseJSON = JSON.parse( xhttp.responseText);\\t\\t\\tvar helloName = responseJSON.response;\\t\\t\\tdocument.getElementById( \\\"hello__service-sayHello\\\").innerHTML = helloName;\\t\\t}\\t};"
+					+ "\\tvar name = document.getElementById( \\\"hello__service-name\\\").value;"
+					+ "\\tvar requestJSON = '{\\\"requestType\\\":\\\"sayHello\\\",\\\"name\\\":\\\"' + name + '\\\"}';"
+					+ "\\txhttp.send( requestJSON);}\"}");	
 		}
 		catch (Exception e) {
 			fail( StackTrace.asString(e));
@@ -118,46 +114,32 @@ public class ServiceTests
 	/**
      * Test the sayHello request in HelloService using Mock HTTP request
 	 * 
-	 * @throws InterruptedException if there is an issue putting the thread to sleep. 
-	 * @throws IOException if there is an issue reading the log file. 
+	 * @throws InterruptedException 
+	 * @throws IOException 
 	 */
 	@Test
     public void helloServiceShouldReturnHelloName() throws InterruptedException, IOException {
-		final String SOCKET_URL	= "tcp://localhost:5557"; 
-		
-		// Start HelloService 
-		HelloService helloService = new HelloService( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
-		helloService.start();
+		// Start MockHTTPzeroMQ
+		MockHTTPzeroMQ mockHTTPzeroMQ = new MockHTTPzeroMQ( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
 		Thread.sleep(25);
 		
-		// Start Request Client
-		Context clientContext = ZMQ.context(1);
-		ZMQ.Socket requestClient = clientContext.socket( ZMQ.REQ); 
-		requestClient.connect( SOCKET_URL); 
-		
 		// Send a HTTP request and response to the MockHTTPzeroMQ 
-		String requestId 	= "3";
 		String requestType	= "sayHello";
 		String name 		= "Tess";
 		JSONObject requestJSON = new JSONObject();
-		requestJSON.put( "requestId",	requestId);
 		requestJSON.put( "requestType", requestType);
 		requestJSON.put( "name", 		name);
-		requestClient.send( requestJSON.toString().getBytes(), 0);
-		String reply3 = requestClient.recvStr();
-		Thread.sleep(2);
-		
-		// Send terminate hello service request. 
-		requestClient.send( ("TERMINATE_HELLO_SERVICE").getBytes(), 0);
-		String reply4 = requestClient.recvStr();
+		MockHttpServletRequest mockRequest = new MockHttpServletRequest( requestJSON.toString());
+		MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+		mockHTTPzeroMQ.doPost( mockRequest, mockResponse);
 		Thread.sleep(2);
 		
 		// ____________________ Check Results _____________________ 
-		assertEquals( "{\"requestType\":\"sayHello\",\"requestId\":\"3\",\"response\":\"Hello Tess\"}", reply3);
-		assertEquals( "HelloService being terminated", 	reply4);
+		mockResponse.assertEqualsContentType( "application/json; charset=utf-8");
+		mockResponse.assertEqualsStatus( 200);
+		mockResponse.assertEqualsResponse( "{\"requestType\":\"sayHello\",\"requestId\":\"1\",\"response\":\"Hello Tess\"}");
 	}
-
-	@Test
+	
 	/**
      * Check the logging of HelloService using Mock HTTP request
      * <p>
@@ -166,68 +148,48 @@ public class ServiceTests
 	 * @throws InterruptedException 
 	 * @throws IOException 
 	 */
+	@Test
     public void helloServiceCheckLog() throws InterruptedException, IOException {
-		final String SOCKET_URL	= "tcp://localhost:5557"; 
-
-		startTime = new Date();
 		Date endTime = null;
 		
-		// Start HelloService 
-		HelloService helloService = new HelloService( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
-		helloService.start();
+		// Start MockHTTPzeroMQ
+		MockHTTPzeroMQ mockHTTPzeroMQ = new MockHTTPzeroMQ( SOCKET_URL, LOGGER_URL, LOGGER_TOPIC);
 		Thread.sleep(25);
 		
-		// Start Request Client
-		Context clientContext = ZMQ.context(1);
-		ZMQ.Socket requestClient = clientContext.socket( ZMQ.REQ); 
-		requestClient.connect( SOCKET_URL); 
-		
-		String requestId 	= "5";
+		// Send a HTTP request and response to the MockHTTPzeroMQ 
 		String requestType	= "sendHTML";
-		JSONObject request5JSON = new JSONObject();
-		request5JSON.put( "requestId",	requestId);
-		request5JSON.put( "requestType", requestType);
-		requestClient.send( request5JSON.toString().getBytes(), 0);
-		String reply5 = requestClient.recvStr();
-		Thread.sleep(2);
+		JSONObject requestJSON = new JSONObject();
+		requestJSON.put( "requestType", requestType);
+		MockHttpServletRequest mockRequest = new MockHttpServletRequest( requestJSON.toString());
+		MockHttpServletResponse mockResponse = new MockHttpServletResponse();
+		mockHTTPzeroMQ.doPost( mockRequest, mockResponse);
 		
-		// Send a second HTTP request. 
-		requestId 			= "6";
+		// Send a second HTTP request and response to the MockHTTPzeroMQ 
+		String requestType1	= "sayHello";
 		String name 		= "Tess";
-		String requestType6 = "sayHello";
-		JSONObject request6JSON = new JSONObject();
-		request6JSON.put( "requestId",	requestId);
-		request6JSON.put( "requestType", requestType6);
-		request6JSON.put( "name", 		name);
-		requestClient.send( request6JSON.toString().getBytes(), 0);
-		String reply6 = requestClient.recvStr();
-		Thread.sleep(2);
-		
-		// Send terminate hello service request. 
-		requestClient.send( ("TERMINATE_HELLO_SERVICE").getBytes(), 0);
-		String reply7 = requestClient.recvStr();
-		Thread.sleep(10);
+		JSONObject request1JSON = new JSONObject();
+		request1JSON.put( "requestType", requestType1);
+		request1JSON.put( "name", 		name);
+		MockHttpServletRequest mockRequest1 = new MockHttpServletRequest( request1JSON.toString());
+		MockHttpServletResponse mockResponse1 = new MockHttpServletResponse();
+		mockHTTPzeroMQ.doPost( mockRequest1, mockResponse1);
 		
 		// ____________________ Check Log File ____________________ 
-		assertNotNull( reply5);
-		assertNotNull( reply6);
-		assertNotNull( reply7);
 		Thread.sleep(10);
 		endTime = new Date();
 		
 		TreeMap<Integer,String> logFileLines = readLogFile( LOG_FILE_URL);
-		if( logFileLines.size() < 6) {
-			fail( "logFileLines.size() = " + logFileLines.size() + " < 6");
-		}
 		
 		// Read the log file backwards. 
 		for (Integer lineNumber : logFileLines.keySet()) {
 			String line = logFileLines.get( lineNumber);
-			
+		//	DONE: Remove System.out
+		//	System.out.println( "log line " + lineNumber + ": " + line);
+		
 			try { 
 				String timestampString = line.substring( 0, 23);
 				Date timestamp = dateFormatter.parse( timestampString);
-			//	assertTrue( timestamp.after( startTime));
+			//	assertTrue( timestamp.equals( startTime) || timestamp.after( startTime));
 				assertTrue( timestamp.before( endTime));
 			}
 			catch (Exception e) {
@@ -238,32 +200,36 @@ public class ServiceTests
 				assertTrue( line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened."));
 			}
 			else if (lineNumber == 1) { 
-				assertTrue( line.contains( "HelloService started")); 
+				assertTrue( line.contains( "MockHTTPzeroMQ doPost:1:sendHTML.request")); 
 			}
 			else if (lineNumber == 2) { 
-				assertTrue( line.contains( "HelloService:5:sendHTML.request")); 
+				assertTrue( line.contains( "HelloService:1:sendHTML.request")); 
 			}
 			else if (lineNumber == 3) { 
-				assertTrue( line.contains( "HelloService:5:sendHTML.response")); 
+				assertTrue( line.contains( "HelloService:1:sendHTML.response")); 
 			}
 			else if (lineNumber == 4) { 
-				assertTrue( line.contains( "HelloService:6:sayHello.request:Tess")); 
+				assertTrue( line.contains( "MockHTTPzeroMQ doPost:1:sendHTML.response")); 
 			}
 			else if (lineNumber == 5) { 
-				assertTrue( line.contains( "HelloService:6:sayHello.response:Hello Tess")); 
+				assertTrue( line.contains( "MockHTTPzeroMQ doPost:2:sayHello.request")); 
 			}
 			else if (lineNumber == 6) { 
-				assertTrue( line.contains( "HelloService request: TERMINATE_HELLO_SERVICE")); 
+				assertTrue( line.contains( "HelloService:2:sayHello.request:Tess")); 
 			}
 			else if (lineNumber == 7) { 
-				assertTrue( line.contains( "HelloService closing service and logger sockets and terminate context.")); 
+				assertTrue( line.contains( "HelloService:2:sayHello.response:Hello Tess")); 
+			}
+			else if (lineNumber == 8) { 
+				assertTrue( line.contains( "MockHTTPzeroMQ doPost:2:sayHello.response")); 
 			}
 			else {	
 				fail( "unexpected line " + lineNumber + ": " + line);
 			}
 		}
 	}
-
+	
+	
 	/** 
 	 * Read the log file.
 	 * Asserts that the file exist and can be read. 
@@ -306,5 +272,4 @@ public class ServiceTests
 		
 		return lines;
 	}
-	
 }

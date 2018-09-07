@@ -20,7 +20,7 @@ import org.zeromq.ZMQ.Context;
    <li>Logs the request Id and returning response from the zeroMQ broker.</li>
  </ol>
  *
- * In order to run a MockHTTPzeroMQ the MessageLogger need to be running. 
+ * In order to run a MockHTTPzeroMQ the MessageLogger and HelloService need to be running. 
  *
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
@@ -115,11 +115,16 @@ public class MockHTTPzeroMQ extends Thread {
 		pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + requestType + ".response").getBytes());
 	}
 	
-	/** Close sockets and context  */
-	public void closeAndTerminate() { 
+	/** 
+	 * Close sockets and context  
+	 * @throws InterruptedException if there in an issue putting this thread to sleep. 
+	 */
+	public void closeAndTerminate() throws InterruptedException { 
 		pub2Logger.send( loggerTopicDelimitated + "MockHTTPzeroMQ request: close and terminate", 0);
+		sleep(20);
 		pub2Logger.close();
 		reqHelloService.close();
+		sleep(20);
 		context.term();
 	}
 }
