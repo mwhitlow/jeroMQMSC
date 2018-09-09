@@ -22,28 +22,29 @@ import org.zeromq.ZMQ.Socket;
  */
 public class SayHelloResponse {
 
-	private Socket helloService				= null;
-	private Socket pub2Logger				= null;
-	private String loggerTopicDelimitated	= null;
+	private Socket helloService					= null;
+	private Socket pub2Logger					= null;
+	private String loggerTopicAndServiceName	= null;
 	
 	/**
 	 * SayHelloService Constructor 
 	 * 
 	 * @param helloService seroMQ response socket. 
 	 * @param pub2Logger zeroMQ pub socket to the message logger. 
-	 * @param loggerTopicDelimitated logger topic with delimiter, required for all publications to the logger. 
+	 * @param loggerTopicAndServiceName logger topic with delimiter and service name, HelloService, 
+	 * required for all publications to the logger. 
 	 */
-	public SayHelloResponse(Socket helloService, Socket pub2Logger, String loggerTopicDelimitated) {
-		this.helloService 			= helloService;
-		this.pub2Logger				= pub2Logger;
-		this.loggerTopicDelimitated	= loggerTopicDelimitated;
+	public SayHelloResponse(Socket helloService, Socket pub2Logger, String loggerTopicAndServiceName) {
+		this.helloService 				= helloService;
+		this.pub2Logger					= pub2Logger;
+		this.loggerTopicAndServiceName	= loggerTopicAndServiceName;
 	}
 
 	public void send(JSONObject requestJSON, String logRequestMessage, String logResponseMessage) throws JSONException {
 		String requestId	= requestJSON.getString( "requestId");
 		String requestType	= requestJSON.getString( "requestType");
 		String name 		= requestJSON.getString( "name");
-		pub2Logger.send( loggerTopicDelimitated + logRequestMessage + ":" + name, 0);
+		pub2Logger.send( loggerTopicAndServiceName + logRequestMessage + ":" + name, 0);
 		
 		String responseText = "Hello " + name;
 		JSONObject responseJSON = new JSONObject();
@@ -52,7 +53,7 @@ public class SayHelloResponse {
 		responseJSON.put( "response", 		responseText);
 		helloService.send( responseJSON.toString().getBytes(), 0);
 
-		pub2Logger.send( loggerTopicDelimitated + logResponseMessage + ":" + responseText, 0);
+		pub2Logger.send( loggerTopicAndServiceName + logResponseMessage + ":" + responseText, 0);
 	}
 
 }

@@ -29,7 +29,7 @@ public class MockHTTPzeroMQ extends Thread {
 	private Context 	context					= null; 
 	private ZMQ.Socket 	pub2Logger				= null; 
 	private ZMQ.Socket 	reqHelloService			= null; 
-	private	String		loggerTopicDelimitated	= null;
+	private	String		loggerTopicAndClassName	= null;
 	private int 		requestId 				= 0; 
 	
 	/**
@@ -45,12 +45,12 @@ public class MockHTTPzeroMQ extends Thread {
 		
 		pub2Logger = context.socket( ZMQ.PUB);
 		pub2Logger.connect( loggerURL); 
-		loggerTopicDelimitated = loggerTopic + " ";
-		pub2Logger.send( ( "MockHTTPzeroMQ:PUB socket to MessageLogger connected to " + loggerURL).getBytes());
+		loggerTopicAndClassName = loggerTopic + " MockHTTPzeroMQ";
+		pub2Logger.send( ( loggerTopicAndClassName + ":PUB socket to MessageLogger connected to " + loggerURL).getBytes());
 			
 		reqHelloService = context.socket( ZMQ.REQ);
 		reqHelloService.connect( socketURL);
-		pub2Logger.send( ( "MockHTTPzeroMQ:REQ socket to HelloService connected to " + socketURL).getBytes());
+		pub2Logger.send( ( loggerTopicAndClassName + ":REQ socket to HelloService connected to " + socketURL).getBytes());
 	}
 	
 	/**
@@ -80,7 +80,7 @@ public class MockHTTPzeroMQ extends Thread {
 			
 			// ___________________ Log the Request ___________________ 
 			requestType = requestJSON.getString( "requestType");
-			pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + requestType + ".request").getBytes());		
+			pub2Logger.send( (loggerTopicAndClassName + " doPost:" + requestId + ":" + requestType + ".request").getBytes());		
 			
 			//                 
 			// ___________ Send Request to HelloServices _____________ 
@@ -91,7 +91,7 @@ public class MockHTTPzeroMQ extends Thread {
 			//             Failed to process as JSON Object
 			// ______________ Log the Request as String ______________ 
 			requestType = jsonBuffer.toString();
-			pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + requestType + ".request").getBytes());		
+			pub2Logger.send( (loggerTopicAndClassName + " doPost:" + requestId + ":" + requestType + ".request").getBytes());		
 			
 			// _______________ Send Request to Broker ________________ 
 			reqHelloService.send( requestType.getBytes(), 0);
@@ -112,7 +112,7 @@ public class MockHTTPzeroMQ extends Thread {
 			response.setContentType( "application/text; charset=utf-8");
 			writer.println( reply);
 		}
-		pub2Logger.send( (loggerTopicDelimitated + "MockHTTPzeroMQ doPost:" + requestId + ":" + requestType + ".response").getBytes());
+		pub2Logger.send( (loggerTopicAndClassName + " doPost:" + requestId + ":" + requestType + ".response").getBytes());
 	}
 	
 	/** 
@@ -120,7 +120,7 @@ public class MockHTTPzeroMQ extends Thread {
 	 * @throws InterruptedException if there in an issue putting this thread to sleep. 
 	 */
 	public void closeAndTerminate() throws InterruptedException { 
-		pub2Logger.send( loggerTopicDelimitated + "MockHTTPzeroMQ request: close and terminate", 0);
+		pub2Logger.send( loggerTopicAndClassName + " request: close and terminate", 0);
 		sleep(20);
 		pub2Logger.close();
 		reqHelloService.close();

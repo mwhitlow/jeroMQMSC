@@ -40,7 +40,7 @@ public class HTTPzeroMQServlet extends HttpServlet {
 	private Context 	context					= null; 
 	private ZMQ.Socket 	pub2Logger				= null; 
 	private ZMQ.Socket 	reqHelloService			= null; 
-	private	String		loggerTopicDelimitated	= null;
+	private	String		loggerTopicAndClassName	= null;
 	private int 		requestId 				= 0; 
 	
 	/**
@@ -56,18 +56,18 @@ public class HTTPzeroMQServlet extends HttpServlet {
 		
 		pub2Logger = context.socket( ZMQ.PUB);
 		pub2Logger.connect( loggerURL); 
-		loggerTopicDelimitated = loggerTopic + " ";
+		loggerTopicAndClassName = loggerTopic + " HTTPzeroMQServlet";
 			
 		reqHelloService = context.socket( ZMQ.REQ);
 		reqHelloService.connect( helloServiceURL);
 		
 		try {
 			Thread.sleep( 20);
-			pub2Logger.send( ( "HTTPzeroMQServlet:PUB socket to MessageLogger connected to " + loggerURL).getBytes());
-			pub2Logger.send( ( "HTTPzeroMQServlet:REQ socket to HelloService connected to " + helloServiceURL).getBytes());
+			pub2Logger.send( ( loggerTopicAndClassName + ":PUB socket to MessageLogger connected to " + loggerURL).getBytes());
+			pub2Logger.send( ( loggerTopicAndClassName + ":REQ socket to HelloService connected to " + helloServiceURL).getBytes());
 			
 		} catch (InterruptedException e) {
-			System.err.println( "HTTPzeroMQServlet InterruptedException Thread.sleep( 50)");
+			System.err.println( "HTTPzeroMQServlet InterruptedException Thread.sleep( 20)");
 		}
 	}
 	
@@ -97,7 +97,7 @@ public class HTTPzeroMQServlet extends HttpServlet {
 			
 			// ___________________ Log the Request ___________________ 
 			requestType = requestJSON.getString( "requestType");
-			pub2Logger.send( (loggerTopicDelimitated + "HTTPzeroMQServlet doPost:" + requestId + ":" + requestType + ".request").getBytes());		
+			pub2Logger.send( (loggerTopicAndClassName + " doPost:" + requestId + ":" + requestType + ".request").getBytes());		
 			
 			//                 Send Request to HelloServices
 			// _______________ Send Request to Broker ________________ 
@@ -108,7 +108,7 @@ public class HTTPzeroMQServlet extends HttpServlet {
 			//             Failed to process as JSON Object
 			// ______________ Log the Request as String ______________ 
 			requestType = jsonBuffer.toString();
-			pub2Logger.send( (loggerTopicDelimitated + "HTTPzeroMQServlet doPost:" + requestId + ":" + requestType + ".request").getBytes());		
+			pub2Logger.send( (loggerTopicAndClassName + " doPost:" + requestId + ":" + requestType + ".request").getBytes());		
 			
 			// _______________ Send Request to Broker ________________ 
 			reqHelloService.send( requestType.getBytes(), 0);
@@ -129,12 +129,12 @@ public class HTTPzeroMQServlet extends HttpServlet {
 			response.setContentType( "application/text; charset=utf-8");
 			writer.println( reply);
 		}
-		pub2Logger.send( (loggerTopicDelimitated + "HTTPzeroMQServlet doPost:" + requestId + ":" + requestType + ".response").getBytes());
+		pub2Logger.send( (loggerTopicAndClassName + " doPost:" + requestId + ":" + requestType + ".response").getBytes());
 	}
 	
 	/** Close publisher to the logger and the request/response and terminate the zero MQ context.  */
 	public void closeAndTerminate() { 
-		pub2Logger.send( loggerTopicDelimitated + "HTTPzeroMQServlet request: close publisher to the logger and the request/response sockets," + 
+		pub2Logger.send( loggerTopicAndClassName + " request: close publisher to the logger and the request/response sockets," + 
 						" and terminate the zero MQ context.", 0);
 		pub2Logger.close();
 		reqHelloService.close();

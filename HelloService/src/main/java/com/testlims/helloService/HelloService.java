@@ -47,7 +47,8 @@ public class HelloService extends Thread {
 	private Context 	context					= null; 
 	private ZMQ.Socket 	service					= null; 
 	private ZMQ.Socket 	pub2Logger				= null; 
-	private String		loggerTopicDelimitated	= null;
+//	private String		loggerTopicDelimitated	= null;
+	private String		loggerTopicAndClassName	= null;
 	
 	/**
 	 * HelloService Constructor 
@@ -62,7 +63,8 @@ public class HelloService extends Thread {
 		
 		pub2Logger = context.socket( ZMQ.PUB);
 		pub2Logger.connect( loggerURL); 
-		this.loggerTopicDelimitated = loggerTopic + " ";
+	//	loggerTopicDelimitated = loggerTopic + " ";
+		loggerTopicAndClassName = loggerTopic + " HelloService";
 		
 		service = context.socket( ZMQ.REP);
 		service.bind( socketURL);
@@ -71,7 +73,7 @@ public class HelloService extends Thread {
 		} catch (InterruptedException e) {
 			System.err.println( "HelloService InterruptedException Thread.sleep( 20)");
 		}
-		pub2Logger.send( loggerTopicDelimitated + "HelloService started", 0);
+		pub2Logger.send( loggerTopicAndClassName + " started", 0);
 	}
 	
 	/** 
@@ -87,7 +89,7 @@ public class HelloService extends Thread {
 			
             // Create a responses
 			if (request.contains( "TERMINATE_HELLO_SERVICE")) {
-				pub2Logger.send( loggerTopicDelimitated + "HelloService request: TERMINATE_HELLO_SERVICE", 0);
+				pub2Logger.send( loggerTopicAndClassName + " request: TERMINATE_HELLO_SERVICE", 0);
 				service.send( "HelloService being terminated".getBytes(), 0);
 				break;
 			}
@@ -103,11 +105,11 @@ public class HelloService extends Thread {
 					logResponseMessage	+= requestId + ":" + requestType + ".response";
 					
 					if (requestType.equals( "sayHello")) { 
-						SayHelloResponse serviceRepsonse = new SayHelloResponse( service, pub2Logger, loggerTopicDelimitated);
+						SayHelloResponse serviceRepsonse = new SayHelloResponse( service, pub2Logger, loggerTopicAndClassName);
 						serviceRepsonse.send( requestJSON, logRequestMessage, logResponseMessage);
 					}
 					else if (requestType.equals( "sendHTML")) {
-						SendHTMLResponse serviceRepsonse = new SendHTMLResponse( service, pub2Logger, loggerTopicDelimitated);
+						SendHTMLResponse serviceRepsonse = new SendHTMLResponse( service, pub2Logger, loggerTopicAndClassName);
 						serviceRepsonse.send( requestJSON, logRequestMessage, logResponseMessage);
 					}
 				}
@@ -118,7 +120,7 @@ public class HelloService extends Thread {
 			}
 		}
 		
-		pub2Logger.send( (loggerTopicDelimitated + "HelloService closing service and logger sockets and terminate context."), 0);
+		pub2Logger.send( (loggerTopicAndClassName + " closing service and logger sockets and terminate context."), 0);
 		service.close();
         pub2Logger.close();
 		context.close();

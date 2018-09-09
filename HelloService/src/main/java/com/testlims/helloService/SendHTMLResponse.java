@@ -22,28 +22,29 @@ import org.zeromq.ZMQ.Socket;
  */
 public class SendHTMLResponse {
 
-	private Socket helloService				= null;
-	private Socket pub2Logger				= null;
-	private String loggerTopicDelimitated	= null;
+	private Socket helloService					= null;
+	private Socket pub2Logger					= null;
+	private String loggerTopicAndServiceName	= null;
 	
 	/**
 	 * SendHTMLService Constructor 
 	 * 
 	 * @param helloService seroMQ response socket. 
 	 * @param pub2Logger zeroMQ pub socket to the message logger. 
-	 * @param loggerTopicDelimitated logger topic with delimiter, required for all publications to the logger. 
+	 * @param loggerTopicAndServiceName logger topic with delimiter and service name, HelloService, 
+	 * required for all publications to the logger. 
 	 */
-	public SendHTMLResponse(Socket helloService, Socket pub2Logger, String loggerTopicDelimitated) {
-		this.helloService 			= helloService;
-		this.pub2Logger				= pub2Logger;
-		this.loggerTopicDelimitated	= loggerTopicDelimitated;
+	public SendHTMLResponse(Socket helloService, Socket pub2Logger, String loggerTopicAndServiceName) {
+		this.helloService 				= helloService;
+		this.pub2Logger					= pub2Logger;
+		this.loggerTopicAndServiceName	= loggerTopicAndServiceName;
 	}
 
 	public void send(JSONObject requestJSON, String logRequestMessage, String logResponseMessage) throws JSONException {
 		String requestId	= requestJSON.getString( "requestId");
 		String requestType	= requestJSON.getString( "requestType");
 		
-		pub2Logger.send( loggerTopicDelimitated + logRequestMessage, 0);
+		pub2Logger.send( loggerTopicAndServiceName + logRequestMessage, 0);
 		
 		StringBuilder html = new StringBuilder();
 		html.append("<form class=\"helloForm\">Name: <input id=\"hello__service-name\" type=\"text\" name=\"name\" />" + 
@@ -74,7 +75,7 @@ public class SendHTMLResponse {
 		responseJSON.put( "script", 		sayHelloScript.toString());
 		helloService.send( responseJSON.toString().getBytes(), 0);
 
-		pub2Logger.send( loggerTopicDelimitated + logResponseMessage, 0);
+		pub2Logger.send( loggerTopicAndServiceName + logResponseMessage, 0);
 	}
 
 }
