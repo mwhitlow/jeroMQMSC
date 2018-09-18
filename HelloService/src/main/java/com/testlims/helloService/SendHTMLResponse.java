@@ -64,7 +64,7 @@ public class SendHTMLResponse {
 					"		}" + 
 					"	};" + 
 					"	var name = document.getElementById( \"hello__service-name\").value;" + 
-					"	var requestJSON = '{\"requestType\":\"sayHello\",\"name\":\"' + name + '\"}';" + 
+					"	var requestJSON = '{\"serviceName\":\"HelloService\", \"requestType\":\"sayHello\", \"name\":\"' + name + '\"}';" + 
 					"	xhttp.send( requestJSON);" +
 					"}" );
 		JSONObject responseJSON = new JSONObject();

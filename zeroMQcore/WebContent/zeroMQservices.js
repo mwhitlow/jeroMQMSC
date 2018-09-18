@@ -24,5 +24,5 @@ function displayHelloService() {
 			} 
 		}
 	};
-	xhttp.send( '{\"requestType\":\"sendHTML\"}');
+	xhttp.send( '{\"serviceName\":\"HelloService\", \"requestType\":\"sendHTML\"}');
 }

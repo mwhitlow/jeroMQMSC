@@ -81,9 +81,11 @@ public class MockHTTPzeroMQTests
 			Thread.sleep(25);
 			
 			String requestId 	= "1";
+			String serviceName	= "HelloService";
 			String requestType	= "sendHTML";
 			JSONObject requestJSON = new JSONObject();
 			requestJSON.put( "requestId",	requestId);
+			requestJSON.put( "serviceName", serviceName);
 			requestJSON.put( "requestType", requestType);
 			MockHttpServletRequest mockRequest = new MockHttpServletRequest( requestJSON.toString());
 			MockHttpServletResponse mockResponse = new MockHttpServletResponse();
@@ -98,12 +100,12 @@ public class MockHTTPzeroMQTests
 					+ "\"requestId\":\"1\","
 					+ "\"html\":\"<form class=\\\"helloForm\\\">Name: <input id=\\\"hello__service-name\\\" type=\\\"text\\\" name=\\\"name\\\" />"
 					+ "  <input type=\\\"button\\\" class=\\\"helloService__button\\\" value=\\\"Submit\\\" onclick=\\\"helloService_sayHello()\\\" />"
-					+ "<\\/form><div>Response: <span id=\\\"hello__service-sayHello\\\"><\\/span><\\/div>\","
+					+ "<\\/form><div>Response: <span id=\\\"hello__service-sayHello\\\"><\\/span><\\/div>\",\"serviceName\":\"HelloService\","
 					+ "\"script\":\"function helloService_sayHello() { \\tvar xhttp = new XMLHttpRequest();"
 					+ "\\txhttp.open( 'POST', zeroMQcoreURL + \\\"/services\\\", true);\\txhttp.setRequestHeader( 'Content-type', 'application/json');\\txhttp.onload = function() {\\t\\tif (this.readyState == 4 && this.status == 200)"
 					+ " {\\t\\t\\tvar responseJSON = JSON.parse( xhttp.responseText);\\t\\t\\tvar helloName = responseJSON.response;\\t\\t\\tdocument.getElementById( \\\"hello__service-sayHello\\\").innerHTML = helloName;\\t\\t}\\t};"
 					+ "\\tvar name = document.getElementById( \\\"hello__service-name\\\").value;"
-					+ "\\tvar requestJSON = '{\\\"requestType\\\":\\\"sayHello\\\",\\\"name\\\":\\\"' + name + '\\\"}';"
+					+ "\\tvar requestJSON = '{\\\"serviceName\\\":\\\"HelloService\\\", \\\"requestType\\\":\\\"sayHello\\\", \\\"name\\\":\\\"' + name + '\\\"}';"
 					+ "\\txhttp.send( requestJSON);}\"}");	
 		}
 		catch (Exception e) {
@@ -124,9 +126,11 @@ public class MockHTTPzeroMQTests
 		Thread.sleep(25);
 		
 		// Send a HTTP request and response to the MockHTTPzeroMQ 
+		String serviceName	= "HelloService";
 		String requestType	= "sayHello";
 		String name 		= "Tess";
 		JSONObject requestJSON = new JSONObject();
+		requestJSON.put( "serviceName", serviceName);
 		requestJSON.put( "requestType", requestType);
 		requestJSON.put( "name", 		name);
 		MockHttpServletRequest mockRequest = new MockHttpServletRequest( requestJSON.toString());
@@ -137,7 +141,7 @@ public class MockHTTPzeroMQTests
 		// ____________________ Check Results _____________________ 
 		mockResponse.assertEqualsContentType( "application/json; charset=utf-8");
 		mockResponse.assertEqualsStatus( 200);
-		mockResponse.assertEqualsResponse( "{\"requestType\":\"sayHello\",\"requestId\":\"1\",\"response\":\"Hello Tess\"}");
+		mockResponse.assertEqualsResponse( "{\"requestType\":\"sayHello\",\"requestId\":\"1\",\"response\":\"Hello Tess\",\"serviceName\":\"HelloService\"}");
 	}
 	
 	/**
@@ -157,8 +161,10 @@ public class MockHTTPzeroMQTests
 		Thread.sleep(25);
 		
 		// Send a HTTP request and response to the MockHTTPzeroMQ 
+		String serviceName	= "HelloService";
 		String requestType	= "sendHTML";
 		JSONObject requestJSON = new JSONObject();
+		requestJSON.put( "serviceName", serviceName);
 		requestJSON.put( "requestType", requestType);
 		MockHttpServletRequest mockRequest = new MockHttpServletRequest( requestJSON.toString());
 		MockHttpServletResponse mockResponse = new MockHttpServletResponse();
@@ -168,6 +174,7 @@ public class MockHTTPzeroMQTests
 		String requestType1	= "sayHello";
 		String name 		= "Tess";
 		JSONObject request1JSON = new JSONObject();
+		request1JSON.put( "serviceName", serviceName);
 		request1JSON.put( "requestType", requestType1);
 		request1JSON.put( "name", 		name);
 		MockHttpServletRequest mockRequest1 = new MockHttpServletRequest( request1JSON.toString());
@@ -180,7 +187,6 @@ public class MockHTTPzeroMQTests
 		
 		TreeMap<Integer,String> logFileLines = readLogFile( LOG_FILE_URL);
 		
-		// Read the log file backwards. 
 		for (Integer lineNumber : logFileLines.keySet()) {
 			String line = logFileLines.get( lineNumber);
 		//	DONE: Remove System.out
@@ -197,31 +203,31 @@ public class MockHTTPzeroMQTests
 			}
 			
 			if (lineNumber == 0) { 
-				assertTrue( line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened."));
+				assertTrue( line.contains( "0:MessageLogging:Log file /var/log/zeroMQcore/project.log opened."));
 			}
 			else if (lineNumber == 1) { 
-				assertTrue( line.contains( "MockHTTPzeroMQ doPost:1:sendHTML.request")); 
+				assertTrue( line.contains( "1:MockHTTPzeroMQ:POST:sendHTML.request")); 
 			}
 			else if (lineNumber == 2) { 
-				assertTrue( line.contains( "HelloService:1:sendHTML.request")); 
+				assertTrue( line.contains( "1:HelloService:sendHTML.request")); 
 			}
 			else if (lineNumber == 3) { 
-				assertTrue( line.contains( "HelloService:1:sendHTML.response")); 
+				assertTrue( line.contains( "1:HelloService:sendHTML.response")); 
 			}
 			else if (lineNumber == 4) { 
-				assertTrue( line.contains( "MockHTTPzeroMQ doPost:1:sendHTML.response")); 
+				assertTrue( line.contains( "1:MockHTTPzeroMQ:POST:sendHTML.response")); 
 			}
 			else if (lineNumber == 5) { 
-				assertTrue( line.contains( "MockHTTPzeroMQ doPost:2:sayHello.request")); 
+				assertTrue( line.contains( "2:MockHTTPzeroMQ:POST:sayHello.request")); 
 			}
 			else if (lineNumber == 6) { 
-				assertTrue( line.contains( "HelloService:2:sayHello.request:Tess")); 
+				assertTrue( line.contains( "2:HelloService:sayHello.request:Tess")); 
 			}
 			else if (lineNumber == 7) { 
-				assertTrue( line.contains( "HelloService:2:sayHello.response:Hello Tess")); 
+				assertTrue( line.contains( "2:HelloService:sayHello.response:Hello Tess")); 
 			}
 			else if (lineNumber == 8) { 
-				assertTrue( line.contains( "MockHTTPzeroMQ doPost:2:sayHello.response")); 
+				assertTrue( line.contains( "2:MockHTTPzeroMQ:POST:sayHello.response")); 
 			}
 			else {	
 				fail( "unexpected line " + lineNumber + ": " + line);

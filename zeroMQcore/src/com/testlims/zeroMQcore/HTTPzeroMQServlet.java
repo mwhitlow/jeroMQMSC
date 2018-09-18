@@ -37,11 +37,11 @@ public class HTTPzeroMQServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 8363249898405266358L;
 	
-	private Context 	context					= null; 
-	private ZMQ.Socket 	pub2Logger				= null; 
-	private ZMQ.Socket 	reqHelloService			= null; 
-	private	String		loggerTopicAndClassName	= null;
-	private int 		requestId 				= 0; 
+	private Context 	context			= null; 
+	private ZMQ.Socket 	pub2Logger		= null; 
+	private ZMQ.Socket 	reqHelloService	= null; 
+	private	String		loggerTopic		= null;
+	private int 		requestId 		= 0; 
 	
 	/**
 	 * HTTPzeroMQServlet Constructor  */
@@ -50,25 +50,28 @@ public class HTTPzeroMQServlet extends HttpServlet {
 		
 	//	TODO: The loggerURL, loggerTopic, and helloServiceURL should be read in from a properties file. 
 		String loggerURL		= "tcp://localhost:5556"; 
-		String loggerTopic		= "Project_Log"; 
+		loggerTopic				= "Project_Log"; 
 		String helloServiceURL	= "tcp://localhost:5557";  
 		context = ZMQ.context(1); 
 		
 		pub2Logger = context.socket( ZMQ.PUB);
 		pub2Logger.connect( loggerURL); 
-		loggerTopicAndClassName = loggerTopic + " HTTPzeroMQServlet";
 			
 		reqHelloService = context.socket( ZMQ.REQ);
 		reqHelloService.connect( helloServiceURL);
 		
 		try {
 			Thread.sleep( 20);
-			pub2Logger.send( ( loggerTopicAndClassName + ":PUB socket to MessageLogger connected to " + loggerURL).getBytes());
-			pub2Logger.send( ( loggerTopicAndClassName + ":REQ socket to HelloService connected to " + helloServiceURL).getBytes());
+			pub2Logger.send( (loggerTopicIDClassName() + ":PUB socket to MessageLogger connected to " + loggerURL).getBytes());
+			pub2Logger.send( (loggerTopicIDClassName() + ":REQ socket to HelloService connected to " + helloServiceURL).getBytes());
 			
 		} catch (InterruptedException e) {
 			System.err.println( "HTTPzeroMQServlet InterruptedException Thread.sleep( 20)");
 		}
+	}
+	
+	private String loggerTopicIDClassName() {
+		return loggerTopic + " " + requestId + ":MockHTTPzeroMQ";
 	}
 	
 	/**
@@ -94,10 +97,11 @@ public class HTTPzeroMQServlet extends HttpServlet {
 		
 		try {	
 			JSONObject requestJSON = new JSONObject( jsonBuffer.toString());
+		//	
 			
 			// ___________________ Log the Request ___________________ 
 			requestType = requestJSON.getString( "requestType");
-			pub2Logger.send( (loggerTopicAndClassName + " doPost:" + requestId + ":" + requestType + ".request").getBytes());		
+			pub2Logger.send( (loggerTopicIDClassName() + ":POST:" + requestType + ".request").getBytes());		
 			
 			//                 Send Request to HelloServices
 			// _______________ Send Request to Broker ________________ 
@@ -108,7 +112,7 @@ public class HTTPzeroMQServlet extends HttpServlet {
 			//             Failed to process as JSON Object
 			// ______________ Log the Request as String ______________ 
 			requestType = jsonBuffer.toString();
-			pub2Logger.send( (loggerTopicAndClassName + " doPost:" + requestId + ":" + requestType + ".request").getBytes());		
+			pub2Logger.send( (loggerTopicIDClassName() + ":POST:" + requestType + ".request").getBytes());		
 			
 			// _______________ Send Request to Broker ________________ 
 			reqHelloService.send( requestType.getBytes(), 0);
@@ -129,12 +133,12 @@ public class HTTPzeroMQServlet extends HttpServlet {
 			response.setContentType( "application/text; charset=utf-8");
 			writer.println( reply);
 		}
-		pub2Logger.send( (loggerTopicAndClassName + " doPost:" + requestId + ":" + requestType + ".response").getBytes());
+		pub2Logger.send( (loggerTopicIDClassName() + ":POST:" + requestType + ".response").getBytes());
 	}
 	
 	/** Close publisher to the logger and the request/response and terminate the zero MQ context.  */
 	public void closeAndTerminate() { 
-		pub2Logger.send( loggerTopicAndClassName + " request: close publisher to the logger and the request/response sockets," + 
+		pub2Logger.send( loggerTopicIDClassName() + ":request:Close publisher to the logger and the request/response sockets," + 
 						" and terminate the zero MQ context.", 0);
 		pub2Logger.close();
 		reqHelloService.close();
