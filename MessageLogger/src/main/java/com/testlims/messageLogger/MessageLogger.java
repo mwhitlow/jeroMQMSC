@@ -67,11 +67,11 @@ public class MessageLogger extends Thread {
 			String message = topicAndMessage.replace( topicDelimitated, "");
 			
 			if (message.equals( "ARCIVE_LOG_FILE")) {
-				log( "MessageLogging received ARCIVE_LOG_FILE");
+				log( "-1:MessageLogging:received ARCIVE_LOG_FILE");
 				archiveLogFile();
 			}
 			else if (message.equals( "TERMINATE_LOGGER")) {
-				log( "MessageLogging received TERMINATE_LOGGER");
+				log( "-1:MessageLogging:received TERMINATE_LOGGER");
 				break;
 			}
 			else {
@@ -79,7 +79,7 @@ public class MessageLogger extends Thread {
 			}
 		}	
 		
-		log( "MessageLogging closing logger socket and terminating context.");
+		log( "-1:MessageLogging:Closing logger socket and terminating context.");
 		if (logWriter != null) {
 			try {
 				logWriter.flush();
@@ -96,7 +96,7 @@ public class MessageLogger extends Thread {
 		try {
 			logFile = new File( logFileURL);
 			logWriter = new BufferedWriter( new FileWriter( logFile, true));
-			log( "MessageLogging Log file " + logFileURL + " opened.");
+			log( "0:MessageLogging:Log file " + logFileURL + " opened.");
 		} 
 		catch (IOException ioe) {
 			System.err.print( StackTrace.asString( "MessageLogging ERROR: Failed to open log file " + logFile, ioe));
@@ -153,9 +153,10 @@ public class MessageLogger extends Thread {
 		try {
 			JSONObject messageJSON = new JSONObject( messageString);
 			String requestId	= messageJSON.has( "requestId")		? messageJSON.getString( "requestId")	: "0";
+			String serviceName	= messageJSON.has( "serviceName")	? messageJSON.getString( "serviceName")	: "SERVICE_NAME_MISSING";
 			String requestType	= messageJSON.has( "requestType")	? messageJSON.getString( "requestType")	: "REQUEST_TYPE_MISSING";
 			String message		= messageJSON.has( "message")		? messageJSON.getString( "message")		: "MESSAGE_MISSING";
-			loggedMessage = loggedMessage + requestId + ":" + requestType+ ":" + message;
+			loggedMessage = loggedMessage + requestId + ":" + serviceName + ":" + requestType + ":" + message;
 		}
 		catch (JSONException e) {
 			loggedMessage = loggedMessage + messageString;

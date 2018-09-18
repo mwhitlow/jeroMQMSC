@@ -181,7 +181,7 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 			}
 			
 			if (lineNumber == 0) { 
-				assertTrue( line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened."));
+				assertTrue( line.contains( "0:MessageLogging:Log file /var/log/zeroMQcore/project.log opened."));
 			}
 			else if (lineNumber == 1) { 
 				if( line.contains( "test message after 10 milliseconds")) firstTimeLine = 1;
@@ -196,10 +196,10 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 				assertTrue( line.contains( "test message after 40 milliseconds"));
 			}
 			else if ((lineNumber + firstTimeLine) == 9) { 
-				assertTrue( line.contains( "MessageLogging received TERMINATE_LOGGER"));
+				assertTrue( line.contains( "-1:MessageLogging:received TERMINATE_LOGGER"));
 			}
 			else if ((lineNumber + firstTimeLine) == 10) { 
-				assertTrue( line.contains( "MessageLogging closing logger socket and terminating context."));
+				assertTrue( line.contains( "-1:MessageLogging:Closing logger socket and terminating context."));
 			}
 			else if ((lineNumber + firstTimeLine) > 10) {
 				fail( "Unexpected line number " + lineNumber + " line: " + line);
@@ -235,7 +235,8 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		final String TOPIC 			= "Project_Log";
 		final String topicDelimitated = TOPIC + " ";
 		final String requestId		= "loggerTest1mainId";
-		final String requestType	= "LoggerTests";
+		final String serviceName	= "TestService";
+		final String requestType	= "testRequest";
 		final String message		= "loggerTest1main message";
 		
 	//	Date startTime	= new Date();
@@ -254,6 +255,7 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		Thread.sleep( 30);
 		JSONObject messageJSON = new JSONObject();
 		messageJSON.put( "requestId",	requestId);
+		messageJSON.put( "serviceName", serviceName);
 		messageJSON.put( "requestType", requestType);
 		messageJSON.put( "message", 	message);
 		pub2Logger.send( topicDelimitated + messageJSON.toString());
@@ -271,7 +273,8 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 		// Read the log file backwards. 
 		for (Integer lineNumber : logFileLines.keySet()) {
 			String line = logFileLines.get( lineNumber);
-
+		//	TODO: Remove System.out	
+			System.out.println( "line #" + lineNumber + ": " + line);
 			try {
 				String timestampString = line.substring( 0, 23);
 				Date timestamp = dateFormatter.parse( timestampString);		
@@ -283,16 +286,16 @@ MessageLogging after while loop -&gt; Close logger socket and terminate context.
 			}
 			
 			if (lineNumber == 0) { 
-				assertTrue( line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened."));
+				assertTrue( line.contains( "0:MessageLogging:Log file /var/log/zeroMQcore/project.log opened."));
 			}
 			else if (lineNumber == 1) { 
-				assertTrue( line.contains( "loggerTest1mainId:LoggerTests:loggerTest1main message"));
+				assertTrue( line.contains( "loggerTest1mainId:TestService:testRequest:loggerTest1main message"));
 			}
 			else if (lineNumber == 2) { 
-				assertTrue( line.contains( "MessageLogging received TERMINATE_LOGGER"));
+				assertTrue( line.contains( "-1:MessageLogging:received TERMINATE_LOGGER"));
 			}
 			else if (lineNumber == 3) { 
-				assertTrue( line.contains( "MessageLogging closing logger socket and terminating context."));
+				assertTrue( line.contains( "-1:MessageLogging:Closing logger socket and terminating context."));
 			}
 			else {
 				fail( "Unexpected line number " + lineNumber + " line: " + line);
