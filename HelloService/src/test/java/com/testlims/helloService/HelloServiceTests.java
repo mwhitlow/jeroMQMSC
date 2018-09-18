@@ -90,9 +90,11 @@ public class HelloServiceTests
 			requestClient.connect( SOCKET_URL); 
 			
 			String requestId 	= "1";
+			String serviceName	= "HelloService";
 			String requestType	= "sendHTML";
 			JSONObject requestJSON = new JSONObject();
 			requestJSON.put( "requestId",	requestId);
+			requestJSON.put( "serviceName", serviceName);
 			requestJSON.put( "requestType", requestType);
 			requestClient.send( requestJSON.toString().getBytes(), 0);
 			String reply1 = requestClient.recvStr();
@@ -104,7 +106,7 @@ public class HelloServiceTests
 			
 			// ____________________ Check Results _____________________ 
 			assertEquals( "{\"requestType\":\"sendHTML\",\"requestId\":\"1\",\"html\":\"<form class=\\\"helloForm\\\">Name: <input id=\\\"hello__service-name\\\" type=\\\"text\\\" name=\\\"name\\\" />"
-						+ "  <input type=\\\"button\\\" class=\\\"helloService__button\\\" value=\\\"Submit\\\" onclick=\\\"helloService_sayHello()\\\" /><\\/form><div>Response: <span id=\\\"hello__service-sayHello\\\"><\\/span><\\/div>\","
+						+ "  <input type=\\\"button\\\" class=\\\"helloService__button\\\" value=\\\"Submit\\\" onclick=\\\"helloService_sayHello()\\\" /><\\/form><div>Response: <span id=\\\"hello__service-sayHello\\\"><\\/span><\\/div>\",\"serviceName\":\"HelloService\","
 						+ "\"script\":\"function helloService_sayHello() { \\tvar xhttp = new XMLHttpRequest();\\txhttp.open( 'POST', zeroMQcoreURL + \\\"/services\\\", true);\\txhttp.setRequestHeader( 'Content-type', 'application/json');\\txhttp.onload = function() {\\t\\tif (this.readyState == 4 && this.status == 200) {\\t\\t\\tvar responseJSON = JSON.parse( xhttp.responseText);\\t\\t\\tvar helloName = responseJSON.response;\\t\\t\\tdocument.getElementById( \\\"hello__service-sayHello\\\").innerHTML = helloName;\\t\\t}\\t};\\tvar name = document.getElementById( \\\"hello__service-name\\\").value;\\tvar requestJSON = '{\\\"requestType\\\":\\\"sayHello\\\",\\\"name\\\":\\\"' + name + '\\\"}';\\txhttp.send( requestJSON);}\"}", 
 							reply1);
 			assertEquals( "HelloService being terminated", reply2);
@@ -134,10 +136,12 @@ public class HelloServiceTests
 		
 		// Send a HTTP request and response to the MockHTTPzeroMQ 
 		String requestId 	= "3";
+		String serviceName	= "HelloService";
 		String requestType	= "sayHello";
 		String name 		= "Tess";
 		JSONObject requestJSON = new JSONObject();
 		requestJSON.put( "requestId",	requestId);
+		requestJSON.put( "serviceName", serviceName);
 		requestJSON.put( "requestType", requestType);
 		requestJSON.put( "name", 		name);
 		requestClient.send( requestJSON.toString().getBytes(), 0);
@@ -150,7 +154,7 @@ public class HelloServiceTests
 		Thread.sleep(2);
 		
 		// ____________________ Check Results _____________________ 
-		assertEquals( "{\"requestType\":\"sayHello\",\"requestId\":\"3\",\"response\":\"Hello Tess\"}", reply3);
+		assertEquals( "{\"requestType\":\"sayHello\",\"requestId\":\"3\",\"response\":\"Hello Tess\",\"serviceName\":\"HelloService\"}", reply3);
 		assertEquals( "HelloService being terminated", 	reply4);
 	}
 
@@ -178,9 +182,11 @@ public class HelloServiceTests
 		requestClient.connect( SOCKET_URL); 
 		
 		String requestId 	= "5";
+		String serviceName	= "HelloService";
 		String requestType	= "sendHTML";
 		JSONObject request5JSON = new JSONObject();
 		request5JSON.put( "requestId",	requestId);
+		request5JSON.put( "serviceName", serviceName);
 		request5JSON.put( "requestType", requestType);
 		requestClient.send( request5JSON.toString().getBytes(), 0);
 		String reply5 = requestClient.recvStr();
@@ -192,6 +198,7 @@ public class HelloServiceTests
 		String requestType6 = "sayHello";
 		JSONObject request6JSON = new JSONObject();
 		request6JSON.put( "requestId",	requestId);
+		request6JSON.put( "serviceName", serviceName);
 		request6JSON.put( "requestType", requestType6);
 		request6JSON.put( "name", 		name);
 		requestClient.send( request6JSON.toString().getBytes(), 0);
@@ -215,9 +222,10 @@ public class HelloServiceTests
 			fail( "logFileLines.size() = " + logFileLines.size() + " < 6");
 		}
 		
-		// Read the log file backwards. 
 		for (Integer lineNumber : logFileLines.keySet()) {
 			String line = logFileLines.get( lineNumber);
+		//	DONE: Remove System.out	
+		//	System.out.println( "line #" + lineNumber + ": " + line);
 			
 			try { 
 				String timestampString = line.substring( 0, 23);
@@ -230,28 +238,28 @@ public class HelloServiceTests
 			}
 			
 			if (lineNumber == 0) { 
-				assertTrue( line.contains( "MessageLogging Log file /var/log/zeroMQcore/project.log opened."));
+				assertTrue( line.contains( "0:MessageLogging:Log file /var/log/zeroMQcore/project.log opened."));
 			}
 			else if (lineNumber == 1) { 
-				assertTrue( line.contains( "HelloService started")); 
+				assertTrue( line.contains( "0:HelloService:Started")); 
 			}
 			else if (lineNumber == 2) { 
-				assertTrue( line.contains( "HelloService:5:sendHTML.request")); 
+				assertTrue( line.contains( "5:HelloService:sendHTML.request")); 
 			}
 			else if (lineNumber == 3) { 
-				assertTrue( line.contains( "HelloService:5:sendHTML.response")); 
+				assertTrue( line.contains( "5:HelloService:sendHTML.response")); 
 			}
 			else if (lineNumber == 4) { 
-				assertTrue( line.contains( "HelloService:6:sayHello.request:Tess")); 
+				assertTrue( line.contains( "6:HelloService:sayHello.request:Tess")); 
 			}
 			else if (lineNumber == 5) { 
-				assertTrue( line.contains( "HelloService:6:sayHello.response:Hello Tess")); 
+				assertTrue( line.contains( "6:HelloService:sayHello.response:Hello Tess")); 
 			}
 			else if (lineNumber == 6) { 
-				assertTrue( line.contains( "HelloService request: TERMINATE_HELLO_SERVICE")); 
+				assertTrue( line.contains( "-1:HelloService:request: TERMINATE_HELLO_SERVICE")); 
 			}
 			else if (lineNumber == 7) { 
-				assertTrue( line.contains( "HelloService closing service and logger sockets and terminate context.")); 
+				assertTrue( line.contains( "-1:HelloService:Closing service and logger sockets and terminate context.")); 
 			}
 			else {	
 				fail( "unexpected line " + lineNumber + ": " + line);

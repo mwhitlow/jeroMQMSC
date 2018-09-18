@@ -16,25 +16,28 @@ import org.zeromq.ZMQ.Context;
      <ol>
        <li>sendHTML
          <pre>{
-  "requestId":    "anId", 
-  "requestType":  "sendHTML"
+  "requestId":   "anId", 
+  "serviceName": "helloService", 
+  "requestType": "sendHTML"
 } </pre>
 	   </li>
        <li>sayHello
          <pre>{
-  "requestId":    "anId", 
-  "requestType":  "sayHello",
-  "name":         "a Name"
+  "requestId":   "anId", 
+  "serviceName": "helloService", 
+  "requestType": "sayHello",
+  "name":        "a Name"
 } </pre>
 	   </li> 
      </ol>
-   Both JSON request return a JSON Response that, like the JSON request, contains the request ID and the request type,   
-   plus the specific response for the request type.  Show below is the response JSON for sayHello request type, 
-   where the supplied name was Tess.  
+   Both JSON request return a JSON Response that, like the JSON request, contains the request ID, 
+   service name, and request type, plus the specific response for the request type.  Shown below 
+   is the response JSON for sayHello request type, when the supplied name was Tess.  
    <pre>{
-  "requestId":    "anId", 
-  "requestType":  "sayHello", 
-  "response":     "Hello Tess"
+  "requestId":   "anId", 
+  "serviceName": "helloService", 
+  "requestType": "sayHello", 
+  "response":    "Hello Tess"
 } </pre> 
    </li>
    <li>Text:  The only text string that is currently supported is TERMINATE_HELLO_SERVICE, 
@@ -44,11 +47,11 @@ import org.zeromq.ZMQ.Context;
  * @author Marc Whitlow, Colabrativ, Inc. 
  */
 public class HelloService extends Thread {
-	private Context 	context					= null; 
-	private ZMQ.Socket 	service					= null; 
-	private ZMQ.Socket 	pub2Logger				= null; 
-//	private String		loggerTopicDelimitated	= null;
-	private String		loggerTopicAndClassName	= null;
+	private Context 	context		= null; 
+	private ZMQ.Socket 	service		= null; 
+	private ZMQ.Socket 	pub2Logger	= null; 
+	private String		loggerTopic	= null;
+	private String 		requestId	= "0";
 	
 	/**
 	 * HelloService Constructor 
@@ -59,12 +62,11 @@ public class HelloService extends Thread {
 	 */
 	public HelloService(String socketURL, String loggerURL, String loggerTopic) {
 		setDaemon(true);
+		this.loggerTopic = loggerTopic;
 		context = ZMQ.context(1);
 		
 		pub2Logger = context.socket( ZMQ.PUB);
 		pub2Logger.connect( loggerURL); 
-	//	loggerTopicDelimitated = loggerTopic + " ";
-		loggerTopicAndClassName = loggerTopic + " HelloService";
 		
 		service = context.socket( ZMQ.REP);
 		service.bind( socketURL);
@@ -73,7 +75,7 @@ public class HelloService extends Thread {
 		} catch (InterruptedException e) {
 			System.err.println( "HelloService InterruptedException Thread.sleep( 20)");
 		}
-		pub2Logger.send( loggerTopicAndClassName + " started", 0);
+		pub2Logger.send( loggerTopic + " 0:HelloService:Started on socket " + socketURL, 0);
 	}
 	
 	/** 
@@ -89,43 +91,48 @@ public class HelloService extends Thread {
 			
             // Create a responses
 			if (request.contains( "TERMINATE_HELLO_SERVICE")) {
-				pub2Logger.send( loggerTopicAndClassName + " request: TERMINATE_HELLO_SERVICE", 0);
+				requestId = "-1";
+				pub2Logger.send( loggerTopicIDClassName() + ":request: TERMINATE_HELLO_SERVICE", 0);
 				service.send( "HelloService being terminated".getBytes(), 0);
 				break;
 			}
 			else {
-				String logRequestMessage  = "HelloService:";
-				String logResponseMessage = "HelloService:";
+				String logRequestMessage  = "";
+				String logResponseMessage = "";
 				
 				try {
 					JSONObject requestJSON = new JSONObject( request);
-					String requestId	= requestJSON.getString( "requestId");
+					requestId			= requestJSON.getString( "requestId");
 					String requestType	= requestJSON.getString( "requestType");
-					logRequestMessage	+= requestId + ":" + requestType + ".request";
-					logResponseMessage	+= requestId + ":" + requestType + ".response";
+					logRequestMessage	= loggerTopicIDClassName() + ":" + requestType + ".request";
+					logResponseMessage	= loggerTopicIDClassName() + ":" + requestType + ".response";
 					
 					if (requestType.equals( "sayHello")) { 
-						SayHelloResponse serviceRepsonse = new SayHelloResponse( service, pub2Logger, loggerTopicAndClassName);
+						SayHelloResponse serviceRepsonse = new SayHelloResponse( service, pub2Logger);
 						serviceRepsonse.send( requestJSON, logRequestMessage, logResponseMessage);
 					}
 					else if (requestType.equals( "sendHTML")) {
-						SendHTMLResponse serviceRepsonse = new SendHTMLResponse( service, pub2Logger, loggerTopicAndClassName);
+						SendHTMLResponse serviceRepsonse = new SendHTMLResponse( service, pub2Logger);
 						serviceRepsonse.send( requestJSON, logRequestMessage, logResponseMessage);
 					}
 				}
 				catch (JSONException e) {
-					logRequestMessage	= logRequestMessage + " JSON Issue in " + request;
-					logResponseMessage	= logResponseMessage + " JSON Issue, see request above.";
+					logRequestMessage	= loggerTopicIDClassName() + ":JSON Issue in " + request;
+					logResponseMessage	= loggerTopicIDClassName() + ":JSON Issue, see request above.";
 				}
 			}
 		}
 		
-		pub2Logger.send( (loggerTopicAndClassName + " closing service and logger sockets and terminate context."), 0);
+		pub2Logger.send( (loggerTopicIDClassName() + ":Closing service and logger sockets and terminate context."), 0);
 		service.close();
         pub2Logger.close();
 		context.close();
 	}
 	
+	private String loggerTopicIDClassName() {
+		return loggerTopic + " " + requestId + ":HelloService";
+	}
+    
 	/**
 	 * Main for HelloService1 that creates a REP instance and starts the Hello service. 
 	 * 
